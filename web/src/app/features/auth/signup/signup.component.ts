@@ -52,7 +52,6 @@ export class SignupComponent {
     });
 
     required(path.confirmPassword, { message: 'Confirmação é obrigatória' });
-    // Validator de match: só valida se o password já estiver válido
     validate(path.confirmPassword, ({ value, valueOf }) => {
       if (value() !== valueOf(path.password)) {
         return { kind: 'custom', message: 'Senhas não conferem' };
@@ -72,7 +71,6 @@ export class SignupComponent {
     this.error.set(null);
     this.fieldErrors.set({});
 
-    // ⚠️ NÃO envia confirmPassword pro backend
     const { name, email, password } = this.model();
     this.auth.signup({ name, email, password }).subscribe({
       next: () => this.router.navigate(['/login'], { queryParams: { registered: '1' } }),
