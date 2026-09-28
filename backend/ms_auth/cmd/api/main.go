@@ -16,7 +16,7 @@ func main() {
 	cfg.Base.Server.Port = 4001
 	cfg.Base.Server.Timeout = 5 * time.Second
 
-	cfg.Base.DB.DSN = "postgres://api_user:api_password@localhost:5432/api_db?sslmode=disable"
+	cfg.Base.DB.DSN = "postgres://rateio_user:rateio_password@localhost:5432/rateio_db?sslmode=disable"
 	cfg.Base.DB.MaxOpenConns = 25
 	cfg.Base.DB.MaxIdleConns = 25
 	cfg.Base.DB.MaxIdleTime = "15m"
@@ -29,7 +29,7 @@ func main() {
 	cfg.Base.Security.PublicKeyPath = "resources/keys/publicKey.pem"
 
 	cfg.Base.Cache.Addr = "localhost:6379"
-	cfg.Base.Cache.Password = "redis_secure_password"
+	cfg.Base.Cache.Password = "rateio_redis_password"
 	cfg.Base.Cache.Db = 0
 
 	cfg.Base.Otel.Port = "localhost:4318"

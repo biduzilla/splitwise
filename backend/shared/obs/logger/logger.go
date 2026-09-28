@@ -14,7 +14,6 @@ func NewLogger(cfg config.Config, service, version string) *slog.Logger {
 
 	if cfg.Env == "development" {
 		opts.Level = slog.LevelDebug
-		opts.AddSource = true
 		handler = slog.NewTextHandler(os.Stdout, opts)
 	} else {
 		handler = slog.NewJSONHandler(os.Stdout, opts)

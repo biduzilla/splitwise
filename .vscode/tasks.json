@@ -1,0 +1,107 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "infra: up",
+      "type": "shell",
+      "command": "make up",
+      "problemMatcher": []
+    },
+    {
+      "label": "infra: down",
+      "type": "shell",
+      "command": "make down",
+      "problemMatcher": []
+    },
+
+    {
+      "label": "ms_auth",
+      "type": "shell",
+      "command": "go run ./cmd/api",
+      "options": {
+        "cwd": "${workspaceFolder}/backend/ms_auth"
+      },
+      "presentation": {
+        "panel": "dedicated",
+        "group": "services",
+        "reveal": "always",
+        "clear": true
+      },
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "ms_group",
+      "type": "shell",
+      "command": "go run ./cmd/api",
+      "options": {
+        "cwd": "${workspaceFolder}/backend/ms_group"
+      },
+      "presentation": {
+        "panel": "dedicated",
+        "group": "services",
+        "reveal": "always",
+        "clear": true
+      },
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "ms_expense",
+      "type": "shell",
+      "command": "go run ./cmd/api",
+      "options": {
+        "cwd": "${workspaceFolder}/backend/ms_expense"
+      },
+      "presentation": {
+        "panel": "dedicated",
+        "group": "services",
+        "reveal": "always",
+        "clear": true
+      },
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "ms_balance",
+      "type": "shell",
+      "command": "go run ./cmd/api",
+      "options": {
+        "cwd": "${workspaceFolder}/backend/ms_balance"
+      },
+      "presentation": {
+        "panel": "dedicated",
+        "group": "services",
+        "reveal": "always",
+        "clear": true
+      },
+      "problemMatcher": [],
+      "isBackground": true
+    },
+
+    {
+      "label": "dev: all services",
+      "dependsOn": [
+        "ms_auth",
+        "ms_group",
+        "ms_expense",
+        "ms_balance"
+      ],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    },
+
+    {
+      "label": "test: all",
+      "type": "shell",
+      "command": "make test",
+      "problemMatcher": []
+    },
+    {
+      "label": "build: all",
+      "type": "shell",
+      "command": "make build",
+      "problemMatcher": []
+    }
+  ]
+}

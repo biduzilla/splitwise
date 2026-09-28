@@ -1,0 +1,32 @@
+{
+  "/api/auth": {
+    "target": "http://localhost:4001",
+    "changeOrigin": true,
+    "pathRewrite": { "^/api/auth": "/v1/auth" }
+  },
+  "/api/users": {
+    "target": "http://localhost:4001",
+    "changeOrigin": true,
+    "pathRewrite": { "^/api/users": "/v1/users" }
+  },
+  "/api/groups": {
+    "target": "http://localhost:4002",
+    "changeOrigin": true,
+    "pathRewrite": { "^/api/groups": "/v1/groups" }
+  },
+  "/api/invitations": {
+    "target": "http://localhost:4002",
+    "changeOrigin": true,
+    "pathRewrite": { "^/api/invitations": "/v1/invitations" }
+  },
+  "/api/expenses": {
+    "target": "http://localhost:4003",
+    "changeOrigin": true,
+    "pathRewrite": { "^/api/expenses": "/v1/expenses" }
+  },
+  "/api/settlements": {
+    "target": "http://localhost:4004",
+    "changeOrigin": true,
+    "pathRewrite": { "^/api/settlements": "/v1/settlements" }
+  }
+}
