@@ -1,6 +1,7 @@
 package group
 
 import (
+	"ms_group/internal/features/membership"
 	"time"
 	"uuid"
 
@@ -26,23 +27,9 @@ type GroupDTO struct {
 	Version   int       `json:"version"`
 }
 
-type MemberDTO struct {
-	ID       uuid.UUID `json:"id"`
-	GroupID  uuid.UUID `json:"group_id"`
-	UserID   uuid.UUID `json:"user_id"`
-	Role     string    `json:"role"`
-	JoinedAt time.Time `json:"joined_at"`
-}
-
 type GroupDetailDTO struct {
 	GroupDTO
-	Members []MemberDTO `json:"members"`
-}
-
-type InvitationDTO struct {
-	Token     string    `json:"token"`
-	URL       string    `json:"url"`
-	ExpiresAt time.Time `json:"expires_at"`
+	Members []membership.MemberDTO `json:"members"`
 }
 
 func (g *Group) ToDTO() GroupDTO {
@@ -56,18 +43,8 @@ func (g *Group) ToDTO() GroupDTO {
 	}
 }
 
-func (m *Membership) ToDTO() MemberDTO {
-	return MemberDTO{
-		ID:       m.ID,
-		GroupID:  m.GroupID,
-		UserID:   m.UserID,
-		Role:     string(m.Role),
-		JoinedAt: m.CreatedAt,
-	}
-}
-
 func (d GroupDetail) ToDTO() GroupDetailDTO {
-	members := make([]MemberDTO, len(d.Members))
+	members := make([]membership.MemberDTO, len(d.Members))
 	for i, m := range d.Members {
 		members[i] = m.ToDTO()
 	}
