@@ -5,7 +5,7 @@ import (
 	"expvar"
 	"log/slog"
 	"ms_auth/internal/core/config"
-	"ms_auth/internal/core/database"
+	"ms_auth/resources/migrations"
 	"runtime"
 	shareddatabase "shared/db/database"
 	"shared/obs/logger"
@@ -31,7 +31,7 @@ func NewApp(cfg config.Config) *application {
 		return nil
 	}
 
-	if err := database.RunMigrations(cfg.Base.DB.DSN, logger); err != nil {
+	if err := shareddatabase.RunMigrations(migrations.FS, cfg.Base.DB.DSN, logger); err != nil {
 		logger.Error("failed to run migrations", "error", err)
 		return nil
 	}

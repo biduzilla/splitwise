@@ -2,12 +2,9 @@ package security
 
 import (
 	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"shared/apierror"
 	"shared/auth/domain"
 	"shared/config"
@@ -61,41 +58,13 @@ func NewService(
 }
 
 func (s *JwtService) loadKeys() error {
-	publicKey, err := loadRSAPublicKey(s.config.Security.PublicKeyPath)
+	publicKey, err := LoadPublicKey(s.config.Security.PublicKeyPath)
 	if err != nil {
 		return fmt.Errorf("failed to load public key: %w", err)
 	}
 	s.publicKey = publicKey
 
 	return nil
-}
-
-func loadRSAPublicKey(path string) (*rsa.PublicKey, error) {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return nil, fmt.Errorf("public key file not found: %s", path)
-	}
-
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read public key file: %w", err)
-	}
-
-	block, _ := pem.Decode(data)
-	if block == nil {
-		return nil, errors.New("failed to decode PEM block containing public key")
-	}
-
-	key, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse public key: %w", err)
-	}
-
-	rsaKey, ok := key.(*rsa.PublicKey)
-	if !ok {
-		return nil, errors.New("public key is not RSA")
-	}
-
-	return rsaKey, nil
 }
 
 func (s *JwtService) ExtractAuthenticatedUser(

@@ -1,6 +1,7 @@
 package validator
 
 import (
+	"fmt"
 	"regexp"
 	"slices"
 )
@@ -51,4 +52,25 @@ func Unique(values []string) bool {
 	}
 
 	return len(values) == len(uniqueValues)
+}
+
+func (v *Validator) CheckStringNotEmpty(value, name string) {
+	v.Check(value != "", name, "must be provided")
+}
+
+func (v *Validator) CheckStringMinLen(
+	value string,
+	minLen int,
+	name string,
+) {
+	v.Check(len(value) >= minLen, name, fmt.Sprintf("must be at least %d bytes long", minLen))
+
+}
+
+func (v *Validator) CheckStringMaxLen(
+	value string,
+	maxLen int,
+	name string,
+) {
+	v.Check(len(value) <= maxLen, "password", fmt.Sprintf("must not be more than %d bytes long", maxLen))
 }

@@ -2,5 +2,6 @@ go 1.27.0
 
 use (
 	./ms_auth
+	./ms_group
 	./shared
 )
