@@ -8,7 +8,8 @@ import (
 )
 
 type Config struct {
-	Base config.Config
+	Base          config.Config
+	InviteURLBase string `env:"INVITE_URL_BASE,required"`
 }
 
 func New() Config {

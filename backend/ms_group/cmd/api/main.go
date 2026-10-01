@@ -10,7 +10,7 @@ func main() {
 	cfg := config.Config{}
 	cfg.Base.Env = "development"
 
-	cfg.Base.Server.Port = 4001
+	cfg.Base.Server.Port = 4002
 	cfg.Base.Server.Timeout = 5 * time.Second
 
 	cfg.Base.DB.DSN = "postgres://rateio_user:rateio_password@localhost:5432/rateio_db?sslmode=disable"

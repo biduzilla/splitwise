@@ -8,7 +8,6 @@ import (
 	"shared/apierror"
 	"shared/auth/contexts"
 	"shared/cache"
-	"shared/transaction"
 	"time"
 	"uuid"
 )
@@ -18,11 +17,15 @@ const maxGroupMembers = 10
 type InvitationService struct {
 	repo              repository
 	cache             cache.Cache
-	we                transaction.WriteExecutor
+	we                WriteExecutor
 	kb                cache.KeyBuilder
 	membershipService membershipService
 	tokenService      tokenService
 	inviteURLBase     string
+}
+
+type WriteExecutor interface {
+	Execute(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
 type tokenService interface {
@@ -41,7 +44,7 @@ type membershipService interface {
 func NewService(
 	repo repository,
 	cache cache.Cache,
-	we transaction.WriteExecutor,
+	we WriteExecutor,
 	kb cache.KeyBuilder,
 	membershipService membershipService,
 	tokenService tokenService,
@@ -60,6 +63,10 @@ func NewService(
 
 type service interface {
 	Create(ctx context.Context, groupID uuid.UUID) (*InvitationDTO, error)
+	Accept(
+		ctx context.Context,
+		raw string,
+	) (*membership.Membership, error)
 }
 
 func (s *InvitationService) Create(
@@ -116,7 +123,7 @@ func (s *InvitationService) Create(
 	}, nil
 }
 
-func (s *InvitationService) AcceptInvitation(
+func (s *InvitationService) Accept(
 	ctx context.Context,
 	raw string,
 ) (*membership.Membership, error) {

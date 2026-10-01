@@ -2,25 +2,42 @@ package membership
 
 import (
 	"context"
+	"fmt"
+	"shared/apierror"
+	"shared/auth/contexts"
 	"shared/cache"
-	"shared/transaction"
 	"uuid"
 )
 
+type groupFinder interface {
+	FindOwnerID(ctx context.Context, groupID uuid.UUID) (uuid.UUID, error)
+}
+
+type WriteExecutor interface {
+	Execute(ctx context.Context, fn func(ctx context.Context) error) error
+}
 type MembershipService struct {
-	repo  repository
-	cache cache.Cache
-	we    transaction.WriteExecutor
-	kb    cache.KeyBuilder
+	repo        repository
+	cache       cache.Cache
+	we          WriteExecutor
+	kb          cache.KeyBuilder
+	groupFinder groupFinder
 }
 
 func NewService(
 	repo repository,
 	cache cache.Cache,
-	we transaction.WriteExecutor,
+	we WriteExecutor,
 	kb cache.KeyBuilder,
+	groupFinder groupFinder,
 ) *MembershipService {
-	return &MembershipService{repo: repo, cache: cache, we: we, kb: kb}
+	return &MembershipService{
+		repo:        repo,
+		cache:       cache,
+		we:          we,
+		kb:          kb,
+		groupFinder: groupFinder,
+	}
 }
 
 type service interface {
@@ -60,7 +77,26 @@ func (s *MembershipService) Insert(ctx context.Context, m *Membership) error {
 }
 
 func (s *MembershipService) Remove(ctx context.Context, groupID, userID uuid.UUID) error {
+	actorID := contexts.GetUser(ctx).GetID()
+
+	ownerID, err := s.groupFinder.FindOwnerID(ctx, groupID)
+	if err != nil {
+		return err
+	}
+	if ownerID != actorID {
+		return apierror.NewBadRequestError(fmt.Errorf("You are not owner"))
+	}
+	if userID == actorID {
+		return apierror.NewValidationError(map[string]string{
+			"user_id": "owner cannot remove themselves",
+		})
+	}
+
 	return s.we.Execute(ctx, func(ctx context.Context) error {
 		return s.repo.Remove(ctx, groupID, userID)
 	})
+}
+
+func (s *MembershipService) SetGroupFinder(gf groupFinder) {
+	s.groupFinder = gf
 }

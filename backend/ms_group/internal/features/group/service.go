@@ -2,13 +2,13 @@ package group
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"ms_group/internal/features/membership"
 	"shared/apierror"
 	"shared/auth/contexts"
 	"shared/cache"
 	"shared/filters"
-	"shared/transaction"
 	"shared/validator"
 	"uuid"
 )
@@ -16,9 +16,13 @@ import (
 type GroupService struct {
 	repo              repository
 	cache             cache.Cache
-	we                transaction.WriteExecutor
+	we                WriteExecutor
 	kb                cache.KeyBuilder
 	membershipService membershipService
+}
+
+type WriteExecutor interface {
+	Execute(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
 type membershipService interface {
@@ -32,7 +36,7 @@ type membershipService interface {
 func NewService(
 	repo repository,
 	cache cache.Cache,
-	we transaction.WriteExecutor,
+	we WriteExecutor,
 	kb cache.KeyBuilder,
 	membershipService membershipService,
 ) *GroupService {
@@ -50,8 +54,8 @@ type service interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*GroupDetail, error)
 	ListByUser(ctx context.Context, f filters.Filters) ([]*Group, filters.Metadata, error)
 	Delete(ctx context.Context, id uuid.UUID) error
-	RemoveMember(ctx context.Context, groupID, userID uuid.UUID) error
-	IsMember(ctx context.Context, groupID, userID uuid.UUID) (*membership.Membership, error)
+	IsMember(ctx context.Context, groupID, userID uuid.UUID) (bool, error)
+	FindOwnerID(ctx context.Context, groupID uuid.UUID) (uuid.UUID, error)
 }
 
 func (s *GroupService) FindByID(
@@ -159,25 +163,21 @@ func (s *GroupService) Delete(ctx context.Context, id uuid.UUID) error {
 	})
 }
 
-func (s *GroupService) RemoveMember(ctx context.Context, groupID, userID uuid.UUID) error {
-	actorID := contexts.GetUser(ctx).GetID()
-
-	g, err := s.repo.FindByID(ctx, groupID)
+func (s *GroupService) IsMember(ctx context.Context, groupID, userID uuid.UUID) (bool, error) {
+	_, err := s.membershipService.FindByGroupIDAndUserID(ctx, groupID, userID)
 	if err != nil {
-		return err
+		if errors.Is(err, apierror.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, err
 	}
-	if g.OwnerID != actorID {
-		return apierror.NewBadRequestError(fmt.Errorf("You are not owner that group"))
-	}
-	if userID == actorID {
-		return apierror.NewValidationError(map[string]string{
-			"user_id": "owner cannot remove themselves",
-		})
-	}
-
-	return s.membershipService.Remove(ctx, groupID, userID)
+	return true, nil
 }
 
-func (s *GroupService) IsMember(ctx context.Context, groupID, userID uuid.UUID) (*membership.Membership, error) {
-	return s.membershipService.FindByGroupIDAndUserID(ctx, groupID, userID)
+func (s *GroupService) FindOwnerID(ctx context.Context, groupID uuid.UUID) (uuid.UUID, error) {
+	g, err := s.repo.FindByID(ctx, groupID)
+	if err != nil {
+		return uuid.Nil(), err
+	}
+	return g.OwnerID, nil
 }
