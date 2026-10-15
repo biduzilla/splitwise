@@ -1,7 +1,10 @@
 package main
 
 import (
+	"log/slog"
+	"ms_group/internal/api"
 	"ms_group/internal/core/config"
+	"os"
 	"time"
 )
 
@@ -31,13 +34,13 @@ func main() {
 
 	cfg.Base.Otel.Port = "localhost:4318"
 
-	// app := api.NewApp(cfg)
-	// if app == nil {
-	// 	slog.Error("failed to initialize app")
-	// 	os.Exit(1)
-	// }
-	// err := app.Server()
-	// if err != nil {
-	// 	app.Logger.Error(err.Error())
-	// }
+	app := api.NewApp(cfg)
+	if app == nil {
+		slog.Error("failed to initialize app")
+		os.Exit(1)
+	}
+	err := app.Server()
+	if err != nil {
+		app.Logger.Error(err.Error())
+	}
 }

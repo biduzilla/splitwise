@@ -31,7 +31,12 @@ func NewApp(cfg config.Config) *application {
 		return nil
 	}
 
-	if err := shareddatabase.RunMigrations(migrations.FS, cfg.Base.DB.DSN, logger); err != nil {
+	if err := shareddatabase.RunMigrations(
+		migrations.FS,
+		cfg.Base.DB.DSN,
+		"auth_schema_migrations",
+		logger,
+	); err != nil {
 		logger.Error("failed to run migrations", "error", err)
 		return nil
 	}

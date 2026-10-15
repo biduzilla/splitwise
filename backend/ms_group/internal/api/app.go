@@ -23,20 +23,24 @@ type application struct {
 const version = "1.0.0"
 
 func NewApp(cfg config.Config) *application {
-	logger := logger.NewLogger(cfg.Base, "ms_auth", version)
+	logger := logger.NewLogger(cfg.Base, "ms_group", version)
 
 	db, err := shareddatabase.OpenDB(cfg.Base)
 	if err != nil {
 		logger.Error(err.Error())
 		return nil
 	}
+	logger.Info("database connection pool established")
 
-	if err := shareddatabase.RunMigrations(migrations.FS, cfg.Base.DB.DSN, logger); err != nil {
+	if err := shareddatabase.RunMigrations(
+		migrations.FS,
+		cfg.Base.DB.DSN,
+		"grp_schema_migrations",
+		logger,
+	); err != nil {
 		logger.Error("failed to run migrations", "error", err)
 		return nil
 	}
-
-	logger.Info("database connection pool established")
 
 	expvar.NewString("version").Set(version)
 
