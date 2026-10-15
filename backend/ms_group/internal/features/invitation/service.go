@@ -159,6 +159,9 @@ func (s *InvitationService) Accept(
 	}
 
 	count, err := s.membershipService.CountActiveMembers(ctx, inv.GroupID)
+	if err != nil {
+		return nil, err
+	}
 	if count >= maxGroupMembers {
 		return nil, apierror.NewValidationError(map[string]string{
 			"group": "group is full",
@@ -176,5 +179,5 @@ func (s *InvitationService) Accept(
 		}
 		return s.repo.MarkUsed(ctx, inv.ID, userID)
 	})
-	return m, nil
+	return m, err
 }

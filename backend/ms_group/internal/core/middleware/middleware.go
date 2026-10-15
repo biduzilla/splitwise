@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	c "ms_group/internal/core/contexts"
 	"net/http"
 	"shared/apierror"
@@ -59,7 +58,7 @@ func (m *Middleware) RequireGroupMember(next http.Handler) http.Handler {
 		}
 
 		if !ok {
-			m.errHandler.HandlerError(w, r, fmt.Errorf("Not a member"))
+			m.errHandler.HandlerError(w, r, apierror.ErrForbidden)
 			return
 		}
 

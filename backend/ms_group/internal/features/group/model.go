@@ -3,7 +3,6 @@ package group
 import (
 	"ms_group/internal/features/membership"
 	"shared/models"
-	"time"
 	"uuid"
 )
 
@@ -13,17 +12,6 @@ type Group struct {
 	Name     string
 	Currency string
 	OwnerID  uuid.UUID
-}
-
-type Invitation struct {
-	models.BaseModel
-	ID        uuid.UUID
-	GroupID   uuid.UUID
-	InviterID uuid.UUID
-	JTI       uuid.UUID
-	ExpiresAt time.Time
-	UsedAt    *time.Time
-	UsedBy    *uuid.UUID
 }
 
 type GroupDetail struct {

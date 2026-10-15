@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/XSAM/otelsql"
+	_ "github.com/lib/pq"
 )
 
 func OpenDB(cfg config.Config) (*sql.DB, error) {

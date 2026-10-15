@@ -67,7 +67,7 @@ func (r *GroupRepository) FindByID(
 	select 
 		id,
 		name,
-		currcency,
+		currency,
 		owner_id,
 		version, 
 		created_at, 

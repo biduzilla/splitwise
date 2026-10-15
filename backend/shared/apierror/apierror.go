@@ -160,6 +160,12 @@ var (
 		Message: "rate limit exceed",
 		Err:     errors.New("rate limit exceed"),
 	}
+
+	ErrForbidden = &HTTPError{
+		Code:    http.StatusForbidden,
+		Message: "Forbidden",
+		Err:     errors.New("forbidden"),
+	}
 )
 
 type ErrorResponse struct {
