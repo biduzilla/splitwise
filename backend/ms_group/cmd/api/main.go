@@ -33,6 +33,7 @@ func main() {
 	cfg.Base.Cache.Db = 0
 
 	cfg.Base.Otel.Port = "localhost:4318"
+	cfg.InviteURLBase = "http://localhost:4200"
 
 	app := api.NewApp(cfg)
 	if app == nil {

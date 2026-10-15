@@ -84,9 +84,10 @@ func (s *AuthService) Authenticate(
 	}
 
 	return &TokenResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		ExpiresIn:    int64(s.jwtService.GetAccessTokenExpiration().Seconds()),
+		AccessToken:      accessToken,
+		RefreshToken:     refreshToken,
+		ExpiresIn:        int64(s.jwtService.GetAccessTokenExpiration().Seconds()),
+		RefreshExpiresIn: int64(s.jwtService.GetRefreshTokenExpiration().Seconds()),
 	}, nil
 }
 

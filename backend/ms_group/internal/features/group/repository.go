@@ -38,7 +38,7 @@ func (r *GroupRepository) Insert(
 	query := `
         INSERT INTO grp_groups (name, currency, owner_id, created_by)
         VALUES (:name, 'BRL', :owner_id, :created_by)
-        RETURNING id, version, created_at
+        RETURNING id, version, created_at, currency
     `
 	params := map[string]any{
 		"name":       g.Name,
@@ -56,7 +56,7 @@ func (r *GroupRepository) Insert(
 	}
 
 	return tx.QueryRowContext(ctx, query, args...).
-		Scan(&g.ID, &g.Version, &g.CreatedAt)
+		Scan(&g.ID, &g.Version, &g.CreatedAt, &g.Currency)
 }
 
 func (r *GroupRepository) FindByID(
