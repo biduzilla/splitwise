@@ -70,7 +70,12 @@ export interface Membership {
   user_id: string;
   role: GroupRole;
   joined_at: string;
-  user?: User;
+  user?: UserSummary;
+}
+
+export interface UserSummary {
+  name: string;
+  email: string;
 }
 
 export interface GroupDetail extends Group {

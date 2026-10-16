@@ -70,6 +70,7 @@ func (r *MembershipRepository) FindByGroupID(
 			m.group_id, 
 			m.user_id, 
 			u.name,
+			u.email,
 			m.role,
             m.version, 
 			m.created_at, 
@@ -100,7 +101,8 @@ func (r *MembershipRepository) FindByGroupID(
 			&m.ID,
 			&m.GroupID,
 			&m.UserID,
-			&m.Name,
+			&m.User.Name,
+			&m.User.Email,
 			&m.Role,
 			&m.Version,
 			&m.CreatedAt,
@@ -123,21 +125,26 @@ func (r *MembershipRepository) FindByGroupIDAndUserID(
 ) (*Membership, error) {
 	query := `
         SELECT 
-			id, 
-			group_id, 
-			user_id, 
-			role,
-            version, 
-			created_at, 
-			created_by, 
-			updated_at, 
-			updated_by, 
-			deleted
-        FROM grp_memberships
+			m.id, 
+			m.group_id, 
+			m.user_id,
+			u.name,
+			u.email, 
+			m.role,
+            m.version, 
+			m.created_at, 
+			m.created_by, 
+			m.updated_at, 
+			m.updated_by, 
+			m.deleted
+        FROM grp_memberships m
+		left join users u
+			on u.id = m.user_id
+			and u.deleted = false
         WHERE 
-			group_id = $1 
-			AND user_id = $2 
-			AND deleted = false
+			m.group_id = $1 
+			AND m.user_id = $2 
+			AND m.deleted = false
     `
 
 	r.logger.Info("query executed", "sql", sqlformat.MinifySQL(query))
@@ -148,6 +155,8 @@ func (r *MembershipRepository) FindByGroupIDAndUserID(
 			&m.ID,
 			&m.GroupID,
 			&m.UserID,
+			&m.User.Name,
+			&m.User.Email,
 			&m.Role,
 			&m.Version,
 			&m.CreatedAt,

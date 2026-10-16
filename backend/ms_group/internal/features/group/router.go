@@ -48,7 +48,6 @@ func (r *GroupRouter) Routes(router chi.Router) {
 
 		router.Route("/{id}", func(router chi.Router) {
 			router.Use(r.m.RequireGroupMember)
-
 			router.Get("/", r.handler.FindByID)
 			router.Delete("/", r.handler.Delete)
 

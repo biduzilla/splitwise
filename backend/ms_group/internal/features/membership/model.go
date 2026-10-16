@@ -12,11 +12,16 @@ const (
 	RoleMember Role = "member"
 )
 
+type UserSummary struct {
+	Name  string
+	Email string
+}
+
 type Membership struct {
 	models.BaseModel
 	ID      uuid.UUID
 	GroupID uuid.UUID
-	Name    string
+	User    UserSummary
 	UserID  uuid.UUID
 	Role    Role
 }
