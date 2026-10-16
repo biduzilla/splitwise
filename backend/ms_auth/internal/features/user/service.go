@@ -88,6 +88,8 @@ func (s *UserService) SignUp(
 		return nil, err
 	}
 
+	user.Activated = true
+
 	err = s.Insert(ctx, user)
 	if err != nil {
 		return nil, err

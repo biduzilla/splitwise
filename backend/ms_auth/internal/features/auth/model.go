@@ -17,6 +17,12 @@ type RefreshToken struct {
 	Revoked   bool
 }
 
+type SessionResponse struct {
+	Authenticated bool      `json:"authenticated"`
+	UserID        uuid.UUID `json:"user_id,omitempty"`
+	Email         *string   `json:"email,omitempty"`
+}
+
 type TokenResponse struct {
 	AccessToken      string `json:"access_token"`
 	RefreshToken     string `json:"refresh_token"`

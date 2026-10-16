@@ -3,12 +3,14 @@ package auth
 import (
 	"context"
 	"net/http"
+	"uuid"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
 	"shared/apierror"
+	"shared/auth/contexts"
 	"shared/auth/cookies"
 	"shared/httpx/httpjson"
 	"shared/httpx/httputils"
@@ -130,11 +132,29 @@ func (h *AuthHandler) Session(w http.ResponseWriter, r *http.Request) {
 	_, span := tracer.Start(r.Context(), "AuthHandler.Session")
 	defer span.End()
 
+	user := contexts.GetUser(r.Context())
+
+	if user == nil || user.GetID() == uuid.Nil() {
+		httputils.Respond(w, r, http.StatusOK,
+			SessionResponse{Authenticated: false}, nil, h.errHandler)
+		return
+	}
+
 	token := cookies.TokenFromRequest(r)
 	authenticated := token != "" && h.authService.ValidateAccessToken(token)
+	if !authenticated {
+		httputils.Respond(w, r, http.StatusOK,
+			SessionResponse{Authenticated: authenticated}, nil, h.errHandler)
+		return
+	}
+
+	id := user.GetID()
+	email := user.GetUsername()
 
 	span.SetStatus(codes.Ok, "Session checked")
-	httputils.Respond(w, r, http.StatusOK, map[string]bool{
-		"authenticated": authenticated,
+	httputils.Respond(w, r, http.StatusOK, SessionResponse{
+		Authenticated: authenticated,
+		UserID:        id,
+		Email:         &email,
 	}, nil, h.errHandler)
 }

@@ -66,6 +66,10 @@ expense: ## Roda ms_expense localmente (:4003)
 balance: ## Roda ms_balance localmente (:4004)
 	cd $(BACKEND)/ms_balance && go run ./cmd/api
 
+.PHONY: web
+web: ## Roda o frontend Angular localmente (:4200)
+	cd web && npm start
+
 .PHONY: build
 build: ## Compila todos os módulos do workspace
 	cd $(BACKEND) && go build all

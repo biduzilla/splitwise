@@ -1,0 +1,83 @@
+<div class="p-6 max-w-6xl mx-auto">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-slate-900">Meus grupos</h1>
+
+    <div class="flex items-center gap-3">
+      <!-- Sort -->
+      <label for="sort" class="text-sm text-slate-600">Ordenar por</label>
+      <select
+        id="sort"
+        [value]="sort()"
+        (change)="onSortChange($event)"
+        class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900
+               transition-all focus:outline-none focus:border-emerald-500 focus:ring-2
+               focus:ring-emerald-500/20 cursor-pointer">
+        @for (opt of sortOptions; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
+
+      <button
+        routerLink="/groups/new"
+        class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5
+               font-medium text-white shadow-sm transition-all hover:bg-emerald-700
+               focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2
+               active:scale-[0.98]">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 4v16m8-8H4" />
+        </svg>
+        Novo grupo
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="flex justify-center py-16">
+      <div class="h-8 w-8 animate-spin rounded-full border-4 border-slate-200
+                  border-t-emerald-600"></div>
+    </div>
+  }
+
+  <!-- Error -->
+  @else if (error()) {
+    <div class="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50
+                px-3 py-2.5 text-sm text-red-700">
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Empty -->
+  @else if (groups().length === 0) {
+    <div class="flex flex-col items-center gap-3 rounded-2xl border border-dashed
+                border-slate-300 bg-white px-6 py-16 text-slate-500">
+      <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+      <p class="text-lg">Você ainda não tem grupos.</p>
+      <a routerLink="/groups/new"
+         class="text-emerald-600 font-medium hover:underline">
+        Criar o primeiro grupo
+      </a>
+    </div>
+  }
+
+  <!-- Grid -->
+  @else {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      @for (group of groups(); track group.id) {
+        <a [routerLink]="['/groups', group.id]"
+           class="block rounded-2xl border border-slate-200 bg-white p-5 shadow-sm
+                  transition-all hover:border-emerald-300 hover:shadow-md">
+          <h2 class="text-lg font-semibold text-slate-900">{{ group.name }}</h2>
+          <p class="mt-1 text-sm text-slate-500">
+            {{ group.currency }} · criado em {{ group.created_at | date:'shortDate' }}
+          </p>
+        </a>
+      }
+    </div>
+  }
+</div>

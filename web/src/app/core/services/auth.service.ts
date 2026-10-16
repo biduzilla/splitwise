@@ -1,7 +1,7 @@
 import { HttpClient } from "@angular/common/http";
 import { computed, inject, Injectable, signal } from "@angular/core";
 import { Router } from "@angular/router";
-import { catchError, finalize, Observable, of, shareReplay, tap } from "rxjs";
+import { catchError, finalize, Observable, of, shareReplay, switchMap, tap } from "rxjs";
 import { OkResponse, SessionResponse, SignUpInput, User } from "../models/api.types";
 
 @Injectable({ providedIn: 'root' })
@@ -12,13 +12,20 @@ export class AuthService {
   private readonly _isAuthenticated = signal(false);
   readonly isAuthenticated = computed(() => this._isAuthenticated())
 
+  private readonly _currentUserId = signal<string | null>(null);
+  readonly currentUserId = computed(() => this._currentUserId());
+
   private refresh$?: Observable<OkResponse>
 
   init(): Observable<SessionResponse> {
     return this.http.get<SessionResponse>('/api/auth/session').pipe(
-      tap((r) => this._isAuthenticated.set(r.authenticated)),
+      tap((r) => {
+        this._isAuthenticated.set(r.authenticated);
+        this._currentUserId.set(r.user_id ?? null)
+      }),
       catchError(() => {
-        this._isAuthenticated.set(false)
+        this._isAuthenticated.set(false);
+        this._currentUserId.set(null);
         return of({ authenticated: false })
       })
     )
@@ -27,7 +34,10 @@ export class AuthService {
   login(email: string, password: string) {
     return this.http
       .post<OkResponse>('/api/auth', { email, password })
-      .pipe(tap(() => this._isAuthenticated.set(true)))
+      .pipe(
+        tap(() => this._isAuthenticated.set(true)),
+        switchMap(() => this.init()),
+      );
   }
 
   signup(input: SignUpInput) {

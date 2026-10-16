@@ -27,6 +27,8 @@ export interface OkResponse {
 
 export interface SessionResponse {
   authenticated: boolean;
+  user_id?: string;
+  email?: string;
 }
 
 export interface LoginInput {
@@ -45,4 +47,48 @@ export interface User {
   email: string;
   name: string;
   version: number;
+}
+
+/* ============ Group ============ */
+export type GroupRole = "owner" | "member";
+
+export type GroupSort = "id" | "-id" | "name" | "-name";
+
+export interface Group {
+  id: string;
+  name: string;
+  currency: string;
+  owner_id: string;
+  created_at: string;
+  version: number;
+}
+
+export interface Membership {
+  id: string;
+  group_id: string;
+  name: string;
+  user_id: string;
+  role: GroupRole;
+  joined_at: string;
+  user?: User;
+}
+
+export interface GroupDetail extends Group {
+  members: Membership[];
+}
+
+export interface GroupFilters {
+  page?: number;
+  page_size?: number;
+  sort?: GroupSort;
+}
+
+export interface CreateGroupInput {
+  name: string;
+}
+
+export interface Invitation {
+  token: string;
+  url: string;
+  expires_at: string;
 }

@@ -44,7 +44,7 @@ func (app *application) Server() error {
 	}
 
 	mux := deps.routers.RegisterRoutes(app.db)
-	instrumentedHandler := otelhttp.NewHandler(mux, "ms_auth")
+	instrumentedHandler := otelhttp.NewHandler(mux, "ms_group")
 
 	srv := newHTTPServer(
 		fmt.Sprintf(":%d", app.config.Base.Server.Port),

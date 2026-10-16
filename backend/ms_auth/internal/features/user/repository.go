@@ -246,11 +246,13 @@ func (r *UserRepository) Insert(
 		insert into users (
 			email,
 			name,
+			activated,
 			password_hash,
 			created_by
 		) values (
 			:email,
 			:name,
+			:activated,
 			:password_hash,
 			:created_by
 		) returning id, created_at, version
@@ -259,6 +261,7 @@ func (r *UserRepository) Insert(
 	params := map[string]any{
 		"email":         model.Email,
 		"name":          model.Name,
+		"activated":     model.Activated,
 		"password_hash": model.PasswordHash,
 		"created_by":    userAuth.GetID(),
 	}

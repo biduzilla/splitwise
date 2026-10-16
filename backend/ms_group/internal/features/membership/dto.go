@@ -8,6 +8,7 @@ import (
 type MemberDTO struct {
 	ID       uuid.UUID `json:"id"`
 	GroupID  uuid.UUID `json:"group_id"`
+	Name     string    `json:"name"`
 	UserID   uuid.UUID `json:"user_id"`
 	Role     string    `json:"role"`
 	JoinedAt time.Time `json:"joined_at"`
@@ -18,6 +19,7 @@ func (m *Membership) ToDTO() MemberDTO {
 		ID:       m.ID,
 		GroupID:  m.GroupID,
 		UserID:   m.UserID,
+		Name:     m.Name,
 		Role:     string(m.Role),
 		JoinedAt: m.CreatedAt,
 	}

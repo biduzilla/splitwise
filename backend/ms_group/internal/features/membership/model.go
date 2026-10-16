@@ -16,6 +16,7 @@ type Membership struct {
 	models.BaseModel
 	ID      uuid.UUID
 	GroupID uuid.UUID
+	Name    string
 	UserID  uuid.UUID
 	Role    Role
 }
