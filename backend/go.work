@@ -4,4 +4,5 @@ use (
 	./ms_auth
 	./ms_group
 	./shared
+	./messaging
 )
