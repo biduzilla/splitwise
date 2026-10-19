@@ -2,6 +2,7 @@ package api
 
 import (
 	"log/slog"
+	"messaging"
 
 	"ms_group/internal/core/config"
 	"ms_group/internal/features/group"
@@ -10,6 +11,8 @@ import (
 	"shared/auth/security"
 	"shared/cache"
 	"shared/transaction"
+
+	"github.com/IBM/sarama"
 )
 
 type services struct {
@@ -24,6 +27,7 @@ func NewServices(
 	tx transaction.Manager,
 	config config.Config,
 	logger *slog.Logger,
+	producer sarama.SyncProducer,
 ) (*services, error) {
 	cacheClient, err := cache.NewRedisCache(config.Base.Cache.Addr,
 		config.Base.Cache.Password, config.Base.Cache.Db, nil)
@@ -33,6 +37,8 @@ func NewServices(
 	}
 
 	logger.Info("reddis connection pool established")
+
+	producersSvc := messaging.NewProducer(producer, logger)
 
 	jwtService, err := security.NewService(config.Base)
 	if err != nil {
@@ -45,6 +51,8 @@ func NewServices(
 		mbD.cache,
 		mbD.executor,
 		mbD.keyBuilder,
+		producersSvc,
+		logger,
 		nil,
 	)
 
@@ -54,6 +62,8 @@ func NewServices(
 		grpDeps.cache,
 		grpDeps.executor,
 		grpDeps.keyBuilder,
+		producersSvc,
+		logger,
 		mbService,
 	)
 
@@ -74,6 +84,8 @@ func NewServices(
 		invDeps.cache,
 		invDeps.executor,
 		invDeps.keyBuilder,
+		producersSvc,
+		logger,
 		mbService,
 		tokenSvc,
 		config.InviteURLBase,

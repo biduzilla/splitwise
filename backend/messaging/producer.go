@@ -28,7 +28,7 @@ func NewProducer(producer sarama.SyncProducer, logger *slog.Logger) *Producer {
 
 func (p *Producer) Publish(
 	ctx context.Context,
-	topic string,
+	topic Topic,
 	event Event,
 ) error {
 	spanName := fmt.Sprintf("Publish %s", topic)
@@ -41,7 +41,7 @@ func (p *Producer) Publish(
 	}
 
 	msg := &sarama.ProducerMessage{
-		Topic:   topic,
+		Topic:   topic.String(),
 		Key:     sarama.StringEncoder(event.Key()),
 		Value:   sarama.ByteEncoder(value),
 		Headers: []sarama.RecordHeader{},

@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"messaging"
 	"ms_group/internal/features/membership"
 	"shared/apierror"
 	"shared/auth/contexts"
 	"shared/cache"
 	"shared/filters"
 	"shared/validator"
+	"time"
 	"uuid"
 )
 
@@ -18,6 +21,8 @@ type GroupService struct {
 	cache             cache.Cache
 	we                WriteExecutor
 	kb                cache.KeyBuilder
+	producer          producer
+	logger            *slog.Logger
 	membershipService membershipService
 }
 
@@ -33,11 +38,17 @@ type membershipService interface {
 	CountActiveMembers(ctx context.Context, groupID uuid.UUID) (int, error)
 }
 
+type producer interface {
+	Publish(ctx context.Context, topic messaging.Topic, event messaging.Event) error
+}
+
 func NewService(
 	repo repository,
 	cache cache.Cache,
 	we WriteExecutor,
 	kb cache.KeyBuilder,
+	producer producer,
+	logger *slog.Logger,
 	membershipService membershipService,
 ) *GroupService {
 	return &GroupService{
@@ -45,6 +56,8 @@ func NewService(
 		cache:             cache,
 		we:                we,
 		kb:                kb,
+		producer:          producer,
+		logger:            logger,
 		membershipService: membershipService,
 	}
 }
@@ -143,6 +156,21 @@ func (s *GroupService) Create(
 
 	if err != nil {
 		return nil, err
+	}
+
+	event := GroupCreated{
+		EventID:    uuid.New(),
+		EventType:  messaging.EventTypeGroupCreated,
+		GroupID:    g.ID,
+		Name:       g.Name,
+		OwnerID:    g.OwnerID,
+		Currency:   g.Currency,
+		OccurredAt: time.Now().UTC(),
+	}
+
+	if err := s.producer.Publish(ctx, messaging.RateioEvents, event); err != nil {
+		s.logger.Error("failed to publish group.created",
+			"group_id", g.ID, "error", err)
 	}
 	return g, nil
 }

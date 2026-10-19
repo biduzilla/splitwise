@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"messaging"
 	"ms_group/internal/features/membership"
 	"shared/apierror"
 	"shared/auth/contexts"
@@ -19,9 +21,15 @@ type InvitationService struct {
 	cache             cache.Cache
 	we                WriteExecutor
 	kb                cache.KeyBuilder
+	producer          producer
+	logger            *slog.Logger
 	membershipService membershipService
 	tokenService      tokenService
 	inviteURLBase     string
+}
+
+type producer interface {
+	Publish(ctx context.Context, topic messaging.Topic, event messaging.Event) error
 }
 
 type WriteExecutor interface {
@@ -46,6 +54,8 @@ func NewService(
 	cache cache.Cache,
 	we WriteExecutor,
 	kb cache.KeyBuilder,
+	producer producer,
+	logger *slog.Logger,
 	membershipService membershipService,
 	tokenService tokenService,
 	inviteURLBase string,
@@ -55,9 +65,11 @@ func NewService(
 		cache:             cache,
 		we:                we,
 		kb:                kb,
+		producer:          producer,
 		membershipService: membershipService,
 		tokenService:      tokenService,
 		inviteURLBase:     inviteURLBase,
+		logger:            logger,
 	}
 }
 
@@ -179,5 +191,25 @@ func (s *InvitationService) Accept(
 		}
 		return s.repo.MarkUsed(ctx, inv.ID, userID)
 	})
+
+	event := GroupMemberAdded{
+		EventID:      uuid.New(),
+		EventType:    messaging.EventTypeGroupMemberAdded.String(),
+		GroupID:      m.GroupID,
+		MembershipID: m.ID,
+		UserID:       m.UserID,
+		Role:         string(m.Role),
+		InviterID:    claims.InviterID,
+		OccurredAt:   time.Now().UTC(),
+	}
+
+	if err := s.producer.Publish(ctx, messaging.RateioEvents, event); err != nil {
+		s.logger.Error("failed to publish group.member_added",
+			"group_id", m.GroupID,
+			"user_id", m.UserID,
+			"error", err,
+		)
+	}
+
 	return m, err
 }

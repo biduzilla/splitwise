@@ -35,12 +35,21 @@ func main() {
 	cfg.Base.Otel.Port = "localhost:4318"
 	cfg.InviteURLBase = "http://localhost:4200"
 
-	app := api.NewApp(cfg)
+	cfg.Kafka.Brokers = []string{"localhost:9094"}
+	cfg.Kafka.GroupID = "ms_group_group"
+
+	app, err := api.NewApp(cfg)
 	if app == nil {
 		slog.Error("failed to initialize app")
 		os.Exit(1)
 	}
-	err := app.Server()
+
+	if err != nil {
+		slog.Error(err.Error())
+		os.Exit(1)
+	}
+
+	err = app.Server()
 	if err != nil {
 		app.Logger.Error(err.Error())
 	}

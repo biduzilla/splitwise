@@ -10,6 +10,10 @@ import (
 type Config struct {
 	Base          config.Config
 	InviteURLBase string `env:"INVITE_URL_BASE,required"`
+	Kafka         struct {
+		Brokers []string `env:"KAFKA_BROKERS,required"`
+		GroupID string   `env:"KAFKA_GROUP_ID,required"`
+	}
 }
 
 func New() Config {

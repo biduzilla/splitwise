@@ -3,9 +3,12 @@ package membership
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"messaging"
 	"shared/apierror"
 	"shared/auth/contexts"
 	"shared/cache"
+	"time"
 	"uuid"
 )
 
@@ -21,7 +24,13 @@ type MembershipService struct {
 	cache       cache.Cache
 	we          WriteExecutor
 	kb          cache.KeyBuilder
+	producer    producer
 	groupFinder groupFinder
+	logger      *slog.Logger
+}
+
+type producer interface {
+	Publish(ctx context.Context, topic messaging.Topic, event messaging.Event) error
 }
 
 func NewService(
@@ -29,6 +38,8 @@ func NewService(
 	cache cache.Cache,
 	we WriteExecutor,
 	kb cache.KeyBuilder,
+	producer producer,
+	logger *slog.Logger,
 	groupFinder groupFinder,
 ) *MembershipService {
 	return &MembershipService{
@@ -37,6 +48,8 @@ func NewService(
 		we:          we,
 		kb:          kb,
 		groupFinder: groupFinder,
+		producer:    producer,
+		logger:      logger,
 	}
 }
 
@@ -92,9 +105,39 @@ func (s *MembershipService) Remove(ctx context.Context, groupID, userID uuid.UUI
 		})
 	}
 
-	return s.we.Execute(ctx, func(ctx context.Context) error {
+	var member *Membership
+	err = s.we.Execute(ctx, func(ctx context.Context) error {
+		m, err := s.repo.FindByGroupIDAndUserID(ctx, groupID, userID)
+		if err != nil {
+			return err
+		}
+		member = m
 		return s.repo.Remove(ctx, groupID, userID)
 	})
+
+	if err != nil {
+		return err
+	}
+
+	event := GroupMemberRemoved{
+		EventID:      uuid.New(),
+		EventType:    messaging.EventTypeGroupMemberRemoved.String(),
+		GroupID:      groupID,
+		MembershipID: member.ID,
+		UserID:       userID,
+		RemovedBy:    actorID,
+		OccurredAt:   time.Now().UTC(),
+	}
+
+	if err := s.producer.Publish(ctx, messaging.RateioEvents, event); err != nil {
+		s.logger.Error("failed to publish group.member_removed",
+			"group_id", groupID,
+			"user_id", userID,
+			"error", err,
+		)
+	}
+
+	return nil
 }
 
 func (s *MembershipService) SetGroupFinder(gf groupFinder) {
