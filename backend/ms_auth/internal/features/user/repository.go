@@ -216,13 +216,17 @@ func (r *UserRepository) FindAllByIds(
 	from users 
 	where 
 		deleted = false
-		id = ANY($1::uuid[])
+		and id = ANY($1::uuid[])
 	ORDER BY %s %s, id ASC
     LIMIT $2 OFFSET $3
 	`, f.SortColumn(), f.SortDirection())
 	r.logger.Info("query executed", "sql", sqlformat.MinifySQL(query))
 
-	args := []any{ids, f.Limit(), f.Offset()}
+	idStrs := make([]string, len(ids))
+	for i, id := range ids {
+		idStrs[i] = id.String()
+	}
+	args := []any{pq.Array(idStrs), f.Limit(), f.Offset()}
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {

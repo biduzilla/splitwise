@@ -1,6 +1,3 @@
-CREATE SCHEMA IF NOT EXISTS grp;
-SET search_path TO grp;
-
 CREATE TABLE IF NOT EXISTS groups (
     id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name       TEXT NOT NULL,

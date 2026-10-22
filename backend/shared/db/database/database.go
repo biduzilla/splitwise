@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/url"
 	"shared/config"
 	"time"
 
@@ -41,4 +42,38 @@ func OpenDB(cfg config.Config) (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+func EnsureSchema(dsn, schemaName string) error {
+	baseDSN := stripSearchPath(dsn)
+	db, err := sql.Open("postgres", baseDSN)
+	if err != nil {
+		return fmt.Errorf("open for ensure schema: %w", err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec(fmt.Sprintf(`CREATE SCHEMA IF NOT EXISTS %q`, schemaName))
+	if err != nil {
+		return fmt.Errorf("create schema %s: %w", schemaName, err)
+	}
+	return nil
+}
+
+func stripSearchPath(dsn string) string {
+	return removeQueryParam(dsn, "search_path")
+}
+
+func removeQueryParam(dsn, param string) string {
+	u, err := url.Parse(dsn)
+	if err != nil || u.Scheme == "" {
+		return dsn
+	}
+
+	q := u.Query()
+	if _, ok := q[param]; !ok {
+		return dsn
+	}
+	q.Del(param)
+	u.RawQuery = q.Encode()
+	return u.String()
 }

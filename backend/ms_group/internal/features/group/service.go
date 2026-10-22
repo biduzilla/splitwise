@@ -85,7 +85,6 @@ func (s *GroupService) FindByID(
 	if err != nil {
 		return nil, err
 	}
-
 	members := make([]membership.Membership, len(membersPtr))
 	for i, m := range membersPtr {
 		members[i] = *m

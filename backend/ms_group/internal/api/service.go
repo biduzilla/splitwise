@@ -55,7 +55,7 @@ func NewServices(
 		producersSvc,
 		logger,
 		nil,
-		clients.auth,
+		clients.user,
 	)
 
 	grpDeps := newWriteDeps("group", tx, cacheClient)

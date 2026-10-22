@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"messaging"
-	"ms_group/internal/core/httpclient/auth"
+	"ms_group/internal/core/httpclient/user"
 	"shared/apierror"
 	"shared/auth/contexts"
 	"shared/cache"
@@ -28,20 +28,24 @@ type MembershipService struct {
 	producer    producer
 	groupFinder groupFinder
 	logger      *slog.Logger
-	authClient  authClient
+	userClient  userClient
 }
 
 type producer interface {
 	Publish(ctx context.Context, topic messaging.Topic, event messaging.Event) error
 }
 
-type authClient interface {
+type userClient interface {
 	FindAllByIds(
 		ctx context.Context,
 		ids []uuid.UUID,
 		page int,
 		pageSize int,
-	) ([]auth.UserDTO, filters.Metadata, error)
+	) ([]user.UserDTO, filters.Metadata, error)
+	FindById(
+		ctx context.Context,
+		id uuid.UUID,
+	) (user.UserDTO, error)
 }
 
 func NewService(
@@ -52,7 +56,7 @@ func NewService(
 	producer producer,
 	logger *slog.Logger,
 	groupFinder groupFinder,
-	authClient authClient,
+	userClient userClient,
 ) *MembershipService {
 	return &MembershipService{
 		repo:        repo,
@@ -62,7 +66,7 @@ func NewService(
 		groupFinder: groupFinder,
 		producer:    producer,
 		logger:      logger,
-		authClient:  authClient,
+		userClient:  userClient,
 	}
 }
 
@@ -84,16 +88,18 @@ func (s *MembershipService) FindByGroupID(ctx context.Context, groupID uuid.UUID
 		return nil, err
 	}
 
-	ids := make([]uuid.UUID, 0, len(members))
+	ids := make([]uuid.UUID, len(members))
 	for i, m := range members {
 		ids[i] = m.UserID
 	}
-	users, _, err := s.authClient.FindAllByIds(ctx, ids, 0, 100)
+	users, _, err := s.userClient.FindAllByIds(ctx, ids, 0, 100)
 	if err != nil {
+		s.logger.Warn("failed to enrich members with user data",
+			"group_id", groupID, "error", err)
 		return nil, err
 	}
 
-	userMap := make(map[uuid.UUID]auth.UserDTO, len(users))
+	userMap := make(map[uuid.UUID]user.UserDTO, len(users))
 	for _, u := range users {
 		userMap[u.ID] = u
 	}
@@ -120,11 +126,13 @@ func (s *MembershipService) FindByGroupIDAndUserID(ctx context.Context, groupID,
 		return nil, err
 	}
 
-	user, _, err := s.authClient.FindAllByIds(ctx, []uuid.UUID{m.UserID}, 0, 100)
+	user, err := s.userClient.FindById(ctx, m.UserID)
 	if err != nil {
+		s.logger.Warn("failed to enrich member with user data",
+			"group_id", groupID, "error", err)
 		return nil, err
 	}
-	m.User = &user[0]
+	m.User = &user
 
 	return m, nil
 }

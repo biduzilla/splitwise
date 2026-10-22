@@ -28,6 +28,11 @@ type userHandler interface {
 		r *http.Request,
 	)
 
+	FindById(
+		w http.ResponseWriter,
+		r *http.Request,
+	)
+
 	FindAllByIds(
 		w http.ResponseWriter,
 		r *http.Request,
@@ -57,6 +62,34 @@ func NewHandler(
 		userService: userService,
 		errHandler:  errorHandler,
 	}
+}
+
+func (h *UserHandler) FindById(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	tracer := otel.Tracer("ms_auth/internal/features/auth")
+	ctx, span := tracer.Start(r.Context(), "GroupHandler.FindById")
+	defer span.End()
+
+	id, ok := httputils.ParseUUID(w, r, h.errHandler)
+	if !ok {
+		span.SetStatus(codes.Error, "Invalid UUID")
+		return
+	}
+
+	span.SetAttributes(attribute.String("user.id", id.String()))
+
+	g, err := h.userService.FindById(ctx, id)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "Failed to fetch group")
+		h.errHandler.HandlerError(w, r, err)
+		return
+	}
+
+	span.SetStatus(codes.Ok, "User fetched")
+	httputils.Respond(w, r, http.StatusOK, g.ToDTO(), nil, h.errHandler)
 }
 
 func (h *UserHandler) FindAllByIds(

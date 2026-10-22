@@ -94,10 +94,7 @@ func (c *BaseClient) do(
 		if mapper == nil {
 			mapper = DefaultErrorMapper
 		}
-
-		if mErr := mapper(resp.StatusCode, body); mErr != nil {
-			return mErr
-		}
+		return mapper(resp.StatusCode, body)
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {

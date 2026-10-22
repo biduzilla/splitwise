@@ -38,7 +38,7 @@ func ReadUUIDListParam(
 	}
 
 	seen := make(map[uuid.UUID]struct{})
-	out := make([]uuid.UUID, 0, len(idsStr))
+	out := make([]uuid.UUID, len(idsStr))
 	for i, s := range idsStr {
 		s = strings.TrimSpace(s)
 		if s == "" {

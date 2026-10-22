@@ -37,6 +37,11 @@ func NewApp(cfg config.Config) (*application, error) {
 	}
 	logger.Info("database connection pool established")
 
+	if err := shareddatabase.EnsureSchema(cfg.Base.DB.DSN, "grp"); err != nil {
+		logger.Error("failed to ensure schema", "error", err)
+		return nil, err
+	}
+
 	if err := shareddatabase.RunMigrations(
 		migrations.FS,
 		cfg.Base.DB.DSN,

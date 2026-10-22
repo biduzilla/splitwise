@@ -33,6 +33,7 @@ func (r *UserRouter) Routes(router chi.Router) {
 			router.Use(r.m.RequireActivatedUser)
 
 			router.Get("/", r.handler.FindAll)
+			router.Get("/{id}", r.handler.FindById)
 			router.Get("/batch", r.handler.FindAllByIds)
 			router.Put("/{id}", r.handler.Update)
 			router.Delete("/{id}", r.handler.DeleteById)

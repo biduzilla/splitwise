@@ -1,4 +1,4 @@
-package auth
+package user
 
 import (
 	"context"
@@ -65,4 +65,19 @@ func (c *HTTPClient) FindAllByIds(
 	}
 
 	return response.Content, response.Metadata, nil
+}
+
+func (c *HTTPClient) FindById(
+	ctx context.Context,
+	id uuid.UUID,
+) (UserDTO, error) {
+	path := "/" + id.String()
+
+	var response UserDTO
+	err := c.base.Get(ctx, path, &response, nil)
+	if err != nil {
+		return UserDTO{}, err
+	}
+
+	return response, nil
 }

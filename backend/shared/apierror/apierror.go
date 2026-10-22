@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"runtime/debug"
 	"shared/auth/contexts"
 	"shared/httpx/httpjson"
 )
@@ -250,5 +251,6 @@ func (e *ErrorHandler) logError(r *http.Request, err error) {
 		"request_method", r.Method,
 		"request_url", r.URL.String(),
 		"request_id", contexts.GetRequestID(r.Context()),
+		"stack", string(debug.Stack()),
 	)
 }

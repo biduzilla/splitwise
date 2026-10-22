@@ -22,13 +22,20 @@ type application struct {
 
 const version = "1.0.0"
 
-func NewApp(cfg config.Config) *application {
+func NewApp(cfg config.Config) (*application, error) {
 	logger := logger.NewLogger(cfg.Base, "ms_auth", version)
 
 	db, err := shareddatabase.OpenDB(cfg.Base)
 	if err != nil {
 		logger.Error(err.Error())
-		return nil
+		return nil, err
+	}
+
+	logger.Info("database connection pool established")
+
+	if err := shareddatabase.EnsureSchema(cfg.Base.DB.DSN, "auth"); err != nil {
+		logger.Error("failed to ensure schema", "error", err)
+		return nil, err
 	}
 
 	if err := shareddatabase.RunMigrations(
@@ -38,10 +45,8 @@ func NewApp(cfg config.Config) *application {
 		logger,
 	); err != nil {
 		logger.Error("failed to run migrations", "error", err)
-		return nil
+		return nil, err
 	}
-
-	logger.Info("database connection pool established")
 
 	expvar.NewString("version").Set(version)
 
@@ -61,5 +66,5 @@ func NewApp(cfg config.Config) *application {
 		config: cfg,
 		Logger: logger,
 		db:     db,
-	}
+	}, nil
 }

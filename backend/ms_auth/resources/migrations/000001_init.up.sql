@@ -1,6 +1,3 @@
-CREATE SCHEMA IF NOT EXISTS auth;
-SET search_path TO auth;
-
 CREATE TABLE IF NOT EXISTS users (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email         TEXT NOT NULL UNIQUE,

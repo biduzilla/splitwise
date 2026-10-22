@@ -34,6 +34,7 @@ func main() {
 
 	cfg.Base.Otel.Port = "localhost:4318"
 	cfg.InviteURLBase = "http://localhost:4200"
+	cfg.Clients.AuthURL = "http://localhost:4001/v1/users"
 
 	cfg.Kafka.Brokers = []string{"localhost:9094"}
 	cfg.Kafka.GroupID = "ms_group_group"

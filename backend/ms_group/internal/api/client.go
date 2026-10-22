@@ -2,18 +2,18 @@ package api
 
 import (
 	"ms_group/internal/core/config"
-	"ms_group/internal/core/httpclient/auth"
+	"ms_group/internal/core/httpclient/user"
 )
 
 type clients struct {
-	auth *auth.HTTPClient
+	user *user.HTTPClient
 }
 
 func NewClients(
 	cfg config.Config,
 ) *clients {
 	return &clients{
-		auth: auth.NewClient(
+		user: user.NewClient(
 			cfg.Clients.AuthURL,
 			cfg.Base.Server.Timeout,
 		),

@@ -1,7 +1,7 @@
 package membership
 
 import (
-	"ms_group/internal/core/httpclient/auth"
+	"ms_group/internal/core/httpclient/user"
 	"time"
 	"uuid"
 )
@@ -9,7 +9,7 @@ import (
 type MemberDTO struct {
 	ID       uuid.UUID     `json:"id"`
 	GroupID  uuid.UUID     `json:"group_id"`
-	User     *auth.UserDTO `json:"user,omitempty"`
+	User     *user.UserDTO `json:"user,omitempty"`
 	UserID   uuid.UUID     `json:"user_id"`
 	Role     string        `json:"role"`
 	JoinedAt time.Time     `json:"joined_at"`
