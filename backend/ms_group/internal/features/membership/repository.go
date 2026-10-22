@@ -35,7 +35,7 @@ func (r *MembershipRepository) Insert(
 	userAuth := contexts.GetUser(ctx)
 
 	query := `
-        INSERT INTO grp_memberships (
+        INSERT INTO memberships (
 			group_id, 
 			user_id, 
 			role, 
@@ -69,8 +69,6 @@ func (r *MembershipRepository) FindByGroupID(
 			m.id, 
 			m.group_id, 
 			m.user_id, 
-			u.name,
-			u.email,
 			m.role,
             m.version, 
 			m.created_at, 
@@ -78,10 +76,7 @@ func (r *MembershipRepository) FindByGroupID(
 			m.updated_at, 
 			m.updated_by, 
 			m.deleted
-        FROM grp_memberships m
-		left join users u
-			on u.id = m.user_id
-			and u.deleted = false
+        FROM memberships m
         WHERE m.group_id = $1 AND m.deleted = false
         ORDER BY m.created_at ASC
     `
@@ -101,8 +96,6 @@ func (r *MembershipRepository) FindByGroupID(
 			&m.ID,
 			&m.GroupID,
 			&m.UserID,
-			&m.User.Name,
-			&m.User.Email,
 			&m.Role,
 			&m.Version,
 			&m.CreatedAt,
@@ -128,8 +121,6 @@ func (r *MembershipRepository) FindByGroupIDAndUserID(
 			m.id, 
 			m.group_id, 
 			m.user_id,
-			u.name,
-			u.email, 
 			m.role,
             m.version, 
 			m.created_at, 
@@ -137,10 +128,7 @@ func (r *MembershipRepository) FindByGroupIDAndUserID(
 			m.updated_at, 
 			m.updated_by, 
 			m.deleted
-        FROM grp_memberships m
-		left join users u
-			on u.id = m.user_id
-			and u.deleted = false
+        FROM memberships m
         WHERE 
 			m.group_id = $1 
 			AND m.user_id = $2 
@@ -155,8 +143,6 @@ func (r *MembershipRepository) FindByGroupIDAndUserID(
 			&m.ID,
 			&m.GroupID,
 			&m.UserID,
-			&m.User.Name,
-			&m.User.Email,
 			&m.Role,
 			&m.Version,
 			&m.CreatedAt,
@@ -181,7 +167,7 @@ func (r *MembershipRepository) Remove(
 	userAuth := contexts.GetUser(ctx)
 
 	query := `
-        UPDATE grp_memberships
+        UPDATE memberships
         SET 
 			deleted = true, 
 			updated_at = now(), 
@@ -213,7 +199,7 @@ func (r *MembershipRepository) CountActiveMembers(ctx context.Context, groupID u
 	var n int
 	q := `SELECT 
 			count(*) 
-		FROM grp_memberships 
+		FROM memberships 
 		WHERE group_id = $1 AND deleted = false`
 
 	err := r.db.QueryRowContext(ctx,

@@ -24,15 +24,7 @@ func (m *Membership) ToDTO() MemberDTO {
 		ID:       m.ID,
 		GroupID:  m.GroupID,
 		UserID:   m.UserID,
-		User:     m.User.ToDTO(),
 		Role:     string(m.Role),
 		JoinedAt: m.CreatedAt,
-	}
-}
-
-func (m *UserSummary) ToDTO() UserSummaryDTO {
-	return UserSummaryDTO{
-		Email: m.Email,
-		Name:  m.Name,
 	}
 }

@@ -12,7 +12,6 @@ import (
 	"shared/cache"
 	"shared/filters"
 	"shared/validator"
-	"time"
 	"uuid"
 )
 
@@ -158,20 +157,20 @@ func (s *GroupService) Create(
 		return nil, err
 	}
 
-	event := GroupCreated{
-		EventID:    uuid.New(),
-		EventType:  messaging.EventTypeGroupCreated,
-		GroupID:    g.ID,
-		Name:       g.Name,
-		OwnerID:    g.OwnerID,
-		Currency:   g.Currency,
-		OccurredAt: time.Now().UTC(),
-	}
+	// event := GroupCreated{
+	// 	EventID:    uuid.New(),
+	// 	EventType:  messaging.EventTypeGroupCreated,
+	// 	GroupID:    g.ID,
+	// 	Name:       g.Name,
+	// 	OwnerID:    g.OwnerID,
+	// 	Currency:   g.Currency,
+	// 	OccurredAt: time.Now().UTC(),
+	// }
 
-	if err := s.producer.Publish(ctx, messaging.RateioEvents, event); err != nil {
-		s.logger.Error("failed to publish group.created",
-			"group_id", g.ID, "error", err)
-	}
+	// if err := s.producer.Publish(ctx, messaging.RateioEvents, event); err != nil {
+	// 	s.logger.Error("failed to publish group.created",
+	// 		"group_id", g.ID, "error", err)
+	// }
 	return g, nil
 }
 

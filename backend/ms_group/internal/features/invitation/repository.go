@@ -30,7 +30,7 @@ func (r *InvitationRepository) Insert(ctx context.Context, inv *Invitation) erro
 	userAuth := contexts.GetUser(ctx)
 
 	query := `
-        INSERT INTO grp_invitations (
+        INSERT INTO invitations (
 			group_id, 
 			inviter_id, 
 			jti, 
@@ -78,7 +78,7 @@ func (r *InvitationRepository) FindByJTI(ctx context.Context, jti uuid.UUID) (*I
 			updated_at, 
 			updated_by, 
 			deleted
-        FROM grp_invitations
+        FROM invitations
         WHERE jti = $1 AND deleted = false
     `
 
@@ -111,7 +111,7 @@ func (r *InvitationRepository) FindByJTI(ctx context.Context, jti uuid.UUID) (*I
 
 func (r *InvitationRepository) MarkUsed(ctx context.Context, id, userID uuid.UUID) error {
 	query := `
-        UPDATE grp_invitations
+        UPDATE invitations
         SET 
 			used_at = now(), 
 			used_by = $2,

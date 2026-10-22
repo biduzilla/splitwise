@@ -50,6 +50,12 @@ type repository interface {
 		id uuid.UUID,
 	) (*User, error)
 
+	FindAllByIds(
+		ctx context.Context,
+		ids []uuid.UUID,
+		f filters.Filters,
+	) ([]*User, filters.Metadata, error)
+
 	FindByEmail(
 		ctx context.Context,
 		email string,
@@ -187,6 +193,74 @@ func (r *UserRepository) FindById(
 	}
 
 	return &model, nil
+}
+
+func (r *UserRepository) FindAllByIds(
+	ctx context.Context,
+	ids []uuid.UUID,
+	f filters.Filters,
+) ([]*User, filters.Metadata, error) {
+	query := fmt.Sprintf(`
+	select 
+		count(*) OVER(),
+		id,
+		email,
+		name,
+		password_hash,
+		activated,
+		version,
+		created_at,
+		created_by,
+		updated_at,
+		updated_by
+	from users 
+	where 
+		deleted = false
+		id = ANY($1::uuid[])
+	ORDER BY %s %s, id ASC
+    LIMIT $2 OFFSET $3
+	`, f.SortColumn(), f.SortDirection())
+	r.logger.Info("query executed", "sql", sqlformat.MinifySQL(query))
+
+	args := []any{ids, f.Limit(), f.Offset()}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, filters.Metadata{}, err
+	}
+
+	defer rows.Close()
+
+	totalRecords := 0
+	users := make([]*User, 0)
+
+	for rows.Next() {
+		var user User
+		err := rows.Scan(
+			&totalRecords,
+			&user.ID,
+			&user.Email,
+			&user.Name,
+			&user.PasswordHash,
+			&user.Activated,
+			&user.Version,
+			&user.CreatedAt,
+			&user.CreatedBy,
+			&user.UpdatedAt,
+			&user.UpdatedBy,
+		)
+		if err != nil {
+			return nil, filters.Metadata{}, err
+		}
+		users = append(users, &user)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, filters.Metadata{}, err
+	}
+
+	metadata := filters.CalculateMetadata(totalRecords, f.Page, f.PageSize)
+	return users, metadata, nil
 }
 
 func (r *UserRepository) FindByEmail(

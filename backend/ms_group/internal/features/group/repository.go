@@ -36,7 +36,7 @@ func (r *GroupRepository) Insert(
 	userAuth := contexts.GetUser(ctx)
 
 	query := `
-        INSERT INTO grp_groups (name, currency, owner_id, created_by)
+        INSERT INTO groups (name, currency, owner_id, created_by)
         VALUES (:name, 'BRL', :owner_id, :created_by)
         RETURNING id, version, created_at, currency
     `
@@ -75,7 +75,7 @@ func (r *GroupRepository) FindByID(
 		updated_at, 
 		updated_by, 
 		deleted
-	from grp_groups
+	from groups
 	where id = $1 and deleted = false`
 
 	r.logger.Info("query executed", "sql", sqlformat.MinifySQL(queryGroup))
@@ -118,8 +118,8 @@ func (r *GroupRepository) FindAllByUser(
 			g.updated_at,
 			g.updated_by,
 			g.deleted
-        FROM grp_groups g
-        INNER JOIN grp_memberships m ON m.group_id = g.id
+        FROM groups g
+        INNER JOIN memberships m ON m.group_id = g.id
         WHERE g.deleted = false
           AND m.user_id = $1
           AND m.deleted = false
@@ -168,7 +168,7 @@ func (r *GroupRepository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	userAuth := contexts.GetUser(ctx)
 
 	query := `
-        UPDATE grp_groups
+        UPDATE groups
         SET 
 			deleted = true, 
 			updated_at = now(), 

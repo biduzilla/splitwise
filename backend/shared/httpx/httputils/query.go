@@ -1,8 +1,10 @@
 package httputils
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 	"uuid"
 )
@@ -16,6 +18,48 @@ func ReadStringParam(r *http.Request, key, defaultValue string) string {
 		return v
 	}
 	return defaultValue
+}
+
+func ReadUUIDListParam(
+	r *http.Request,
+	key string,
+	maxLen int,
+	v FieldErrorAdder,
+) []uuid.UUID {
+	raw := r.URL.Query().Get(key)
+	if raw == "" {
+		return nil
+	}
+
+	idsStr := strings.Split(raw, ",")
+	if len(idsStr) > maxLen {
+		v.AddError(key, fmt.Sprintf("must not contain more than %d values", maxLen))
+		return nil
+	}
+
+	seen := make(map[uuid.UUID]struct{})
+	out := make([]uuid.UUID, 0, len(idsStr))
+	for i, s := range idsStr {
+		s = strings.TrimSpace(s)
+		if s == "" {
+			continue
+		}
+
+		id, err := uuid.Parse(s)
+		if err != nil {
+			v.AddError(key, "must be a comma-separated list of valid uuids")
+			return nil
+		}
+
+		if _, dup := seen[id]; dup {
+			continue
+		}
+
+		seen[id] = struct{}{}
+		out[i] = id
+	}
+
+	return out
 }
 
 func ReadIntParam(

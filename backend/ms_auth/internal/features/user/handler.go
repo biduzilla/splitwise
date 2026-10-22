@@ -28,6 +28,11 @@ type userHandler interface {
 		r *http.Request,
 	)
 
+	FindAllByIds(
+		w http.ResponseWriter,
+		r *http.Request,
+	)
+
 	FindAll(
 		w http.ResponseWriter,
 		r *http.Request,
@@ -52,6 +57,67 @@ func NewHandler(
 		userService: userService,
 		errHandler:  errorHandler,
 	}
+}
+
+func (h *UserHandler) FindAllByIds(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	tracer := otel.Tracer("ms_auth/internal/features/user")
+	ctx, span := tracer.Start(r.Context(), "Userhttputils.FindAllByIds")
+
+	defer span.End()
+
+	v := validator.New()
+	ids := httputils.ReadUUIDListParam(r, "ids", 100, v)
+	if !v.Valid() {
+		span.SetStatus(codes.Error, "invalid ids")
+		h.errHandler.HandlerError(w, r, apierror.NewValidationError(v.Errors))
+		return
+	}
+
+	if len(ids) == 0 {
+		span.SetStatus(codes.Error, "missing ids")
+		h.errHandler.HandlerError(w, r, apierror.NewValidationError(
+			map[string]string{"ids": "must be provided"},
+		))
+		return
+	}
+
+	span.SetAttributes(attribute.Int("ids.count", len(ids)))
+
+	f, err := httputils.GetFilters(r, []string{"id", "name", "-id", "-name"})
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "Invalid filters")
+		h.errHandler.HandlerError(w, r, err)
+		return
+	}
+
+	models, metadata, err := h.userService.FindAllByIds(
+		ctx,
+		ids,
+		f,
+	)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, "Failed to fetch users")
+		h.errHandler.HandlerError(w, r, err)
+		return
+	}
+
+	page := filters.NewPage(models, metadata.TotalRecords, metadata.CurrentPage, metadata.PageSize)
+	dtos := filters.Map(page, func(u *User) UserDTO { return u.ToDTO() })
+
+	httputils.Respond(
+		w,
+		r,
+		http.StatusOK,
+		dtos,
+		nil,
+		h.errHandler,
+	)
 }
 
 func (h *UserHandler) SignUp(

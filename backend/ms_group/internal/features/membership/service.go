@@ -8,7 +8,6 @@ import (
 	"shared/apierror"
 	"shared/auth/contexts"
 	"shared/cache"
-	"time"
 	"uuid"
 )
 
@@ -105,13 +104,13 @@ func (s *MembershipService) Remove(ctx context.Context, groupID, userID uuid.UUI
 		})
 	}
 
-	var member *Membership
+	// var member *Membership
 	err = s.we.Execute(ctx, func(ctx context.Context) error {
-		m, err := s.repo.FindByGroupIDAndUserID(ctx, groupID, userID)
-		if err != nil {
-			return err
-		}
-		member = m
+		// m, err := s.repo.FindByGroupIDAndUserID(ctx, groupID, userID)
+		// if err != nil {
+		// 	return err
+		// }
+		// member = m
 		return s.repo.Remove(ctx, groupID, userID)
 	})
 
@@ -119,23 +118,23 @@ func (s *MembershipService) Remove(ctx context.Context, groupID, userID uuid.UUI
 		return err
 	}
 
-	event := GroupMemberRemoved{
-		EventID:      uuid.New(),
-		EventType:    messaging.EventTypeGroupMemberRemoved.String(),
-		GroupID:      groupID,
-		MembershipID: member.ID,
-		UserID:       userID,
-		RemovedBy:    actorID,
-		OccurredAt:   time.Now().UTC(),
-	}
+	// event := GroupMemberRemoved{
+	// 	EventID:      uuid.New(),
+	// 	EventType:    messaging.EventTypeGroupMemberRemoved.String(),
+	// 	GroupID:      groupID,
+	// 	MembershipID: member.ID,
+	// 	UserID:       userID,
+	// 	RemovedBy:    actorID,
+	// 	OccurredAt:   time.Now().UTC(),
+	// }
 
-	if err := s.producer.Publish(ctx, messaging.RateioEvents, event); err != nil {
-		s.logger.Error("failed to publish group.member_removed",
-			"group_id", groupID,
-			"user_id", userID,
-			"error", err,
-		)
-	}
+	// if err := s.producer.Publish(ctx, messaging.RateioEvents, event); err != nil {
+	// 	s.logger.Error("failed to publish group.member_removed",
+	// 		"group_id", groupID,
+	// 		"user_id", userID,
+	// 		"error", err,
+	// 	)
+	// }
 
 	return nil
 }

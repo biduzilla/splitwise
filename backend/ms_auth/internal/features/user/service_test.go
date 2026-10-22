@@ -13,8 +13,13 @@ import (
 )
 
 type mockUserRepo struct {
-	findAllFn     func(ctx context.Context, search string, f filters.Filters) ([]*User, filters.Metadata, error)
-	findByIdFn    func(ctx context.Context, id uuid.UUID) (*User, error)
+	findAllFn      func(ctx context.Context, search string, f filters.Filters) ([]*User, filters.Metadata, error)
+	findByIdFn     func(ctx context.Context, id uuid.UUID) (*User, error)
+	findAllByIdsFn func(
+		ctx context.Context,
+		ids []uuid.UUID,
+		f filters.Filters,
+	) ([]*User, filters.Metadata, error)
 	findByEmailFn func(ctx context.Context, email string) (*User, error)
 	insertFn      func(ctx context.Context, model *User) error
 	updateFn      func(ctx context.Context, model *User) error
@@ -26,6 +31,9 @@ func (m *mockUserRepo) FindAll(ctx context.Context, search string, f filters.Fil
 }
 func (m *mockUserRepo) FindById(ctx context.Context, id uuid.UUID) (*User, error) {
 	return m.findByIdFn(ctx, id)
+}
+func (m *mockUserRepo) FindAllByIds(ctx context.Context, ids []uuid.UUID, f filters.Filters) ([]*User, filters.Metadata, error) {
+	return m.findAllByIdsFn(ctx, ids, f)
 }
 func (m *mockUserRepo) FindByEmail(ctx context.Context, email string) (*User, error) {
 	return m.findByEmailFn(ctx, email)

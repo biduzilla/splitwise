@@ -7,6 +7,7 @@ import (
 	"shared/cache"
 	"shared/filters"
 	"shared/validator"
+	"strings"
 
 	"uuid"
 )
@@ -26,6 +27,11 @@ type userService interface {
 	FindAll(
 		ctx context.Context,
 		search string,
+		f filters.Filters,
+	) ([]*User, filters.Metadata, error)
+	FindAllByIds(
+		ctx context.Context,
+		ids []uuid.UUID,
 		f filters.Filters,
 	) ([]*User, filters.Metadata, error)
 
@@ -96,6 +102,49 @@ func (s *UserService) SignUp(
 	}
 
 	return user, err
+}
+
+func (s *UserService) FindAllByIds(
+	ctx context.Context,
+	ids []uuid.UUID,
+	f filters.Filters,
+) ([]*User, filters.Metadata, error) {
+	if len(ids) == 0 {
+		return []*User{}, filters.Metadata{}, nil
+	}
+	var idsStr strings.Builder
+
+	for _, id := range ids {
+		idsStr.WriteString(id.String())
+	}
+
+	userID := contexts.GetUser(ctx).GetID()
+	key := s.keyBuilder.BuildListKey(
+		cache.UUID(userID),
+		cache.Str(idsStr.String()),
+		cache.Int(f.Page),
+		cache.Int(f.PageSize),
+		cache.Str(f.Sort),
+	)
+	type listPayload struct {
+		Users    []*User
+		Metadata filters.Metadata
+	}
+	payload, err := cache.FetchOrCache(ctx, s.cache, key, func() (listPayload, error) {
+		users, meta, err := s.repo.FindAllByIds(ctx, ids, f)
+		if err != nil {
+			return listPayload{}, err
+		}
+		return listPayload{
+			Users:    users,
+			Metadata: meta,
+		}, nil
+	})
+	if err != nil {
+		return nil, filters.Metadata{}, err
+	}
+
+	return payload.Users, payload.Metadata, nil
 }
 
 func (s *UserService) FindAll(
