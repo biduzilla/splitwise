@@ -28,6 +28,7 @@ func NewServices(
 	config config.Config,
 	logger *slog.Logger,
 	producer sarama.SyncProducer,
+	clients *clients,
 ) (*services, error) {
 	cacheClient, err := cache.NewRedisCache(config.Base.Cache.Addr,
 		config.Base.Cache.Password, config.Base.Cache.Db, nil)
@@ -54,6 +55,7 @@ func NewServices(
 		producersSvc,
 		logger,
 		nil,
+		clients.auth,
 	)
 
 	grpDeps := newWriteDeps("group", tx, cacheClient)

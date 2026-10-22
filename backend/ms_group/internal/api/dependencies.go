@@ -20,7 +20,8 @@ type dependencies struct {
 func (app *application) buildDependencies(shutdown chan struct{}) (*dependencies, error) {
 	repo := NewRepositories(app.db, app.Logger)
 	tx := transaction.NewManager(app.db)
-	services, err := NewServices(repo, tx, app.config, app.Logger, app.kafkaProducer)
+	clients := NewClients(app.config)
+	services, err := NewServices(repo, tx, app.config, app.Logger, app.kafkaProducer, clients)
 	if err != nil {
 		return nil, err
 	}

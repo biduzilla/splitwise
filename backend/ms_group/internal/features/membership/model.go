@@ -1,6 +1,7 @@
 package membership
 
 import (
+	"ms_group/internal/core/httpclient/auth"
 	"shared/models"
 	"uuid"
 )
@@ -18,4 +19,5 @@ type Membership struct {
 	GroupID uuid.UUID
 	UserID  uuid.UUID
 	Role    Role
+	User    *auth.UserDTO
 }

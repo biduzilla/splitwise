@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"log/slog"
 	"messaging"
+	"ms_group/internal/core/httpclient/auth"
 	"shared/apierror"
 	"shared/auth/contexts"
 	"shared/cache"
+	"shared/filters"
 	"uuid"
 )
 
@@ -26,10 +28,20 @@ type MembershipService struct {
 	producer    producer
 	groupFinder groupFinder
 	logger      *slog.Logger
+	authClient  authClient
 }
 
 type producer interface {
 	Publish(ctx context.Context, topic messaging.Topic, event messaging.Event) error
+}
+
+type authClient interface {
+	FindAllByIds(
+		ctx context.Context,
+		ids []uuid.UUID,
+		page int,
+		pageSize int,
+	) ([]auth.UserDTO, filters.Metadata, error)
 }
 
 func NewService(
@@ -40,6 +52,7 @@ func NewService(
 	producer producer,
 	logger *slog.Logger,
 	groupFinder groupFinder,
+	authClient authClient,
 ) *MembershipService {
 	return &MembershipService{
 		repo:        repo,
@@ -49,6 +62,7 @@ func NewService(
 		groupFinder: groupFinder,
 		producer:    producer,
 		logger:      logger,
+		authClient:  authClient,
 	}
 }
 
@@ -62,9 +76,35 @@ type service interface {
 
 func (s *MembershipService) FindByGroupID(ctx context.Context, groupID uuid.UUID) ([]*Membership, error) {
 	key := s.kb.BuildItemKey(groupID.String())
-	return cache.FetchOrCache(ctx, s.cache, key, func() ([]*Membership, error) {
+	members, err := cache.FetchOrCache(ctx, s.cache, key, func() ([]*Membership, error) {
 		return s.repo.FindByGroupID(ctx, groupID)
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	ids := make([]uuid.UUID, 0, len(members))
+	for i, m := range members {
+		ids[i] = m.UserID
+	}
+	users, _, err := s.authClient.FindAllByIds(ctx, ids, 0, 100)
+	if err != nil {
+		return nil, err
+	}
+
+	userMap := make(map[uuid.UUID]auth.UserDTO, len(users))
+	for _, u := range users {
+		userMap[u.ID] = u
+	}
+
+	for _, m := range members {
+		if u, ok := userMap[m.UserID]; ok {
+			m.User = &u
+		}
+	}
+
+	return members, nil
 }
 
 func (s *MembershipService) FindByGroupIDAndUserID(ctx context.Context, groupID, userID uuid.UUID) (*Membership, error) {
@@ -73,9 +113,20 @@ func (s *MembershipService) FindByGroupIDAndUserID(ctx context.Context, groupID,
 		cache.UUID(userID),
 	)
 
-	return cache.FetchOrCache(ctx, s.cache, key, func() (*Membership, error) {
+	m, err := cache.FetchOrCache(ctx, s.cache, key, func() (*Membership, error) {
 		return s.repo.FindByGroupIDAndUserID(ctx, groupID, userID)
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	user, _, err := s.authClient.FindAllByIds(ctx, []uuid.UUID{m.UserID}, 0, 100)
+	if err != nil {
+		return nil, err
+	}
+	m.User = &user[0]
+
+	return m, nil
 }
 
 func (s *MembershipService) CountActiveMembers(ctx context.Context, groupID uuid.UUID) (int, error) {

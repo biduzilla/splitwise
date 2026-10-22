@@ -1,22 +1,18 @@
 package membership
 
 import (
+	"ms_group/internal/core/httpclient/auth"
 	"time"
 	"uuid"
 )
 
 type MemberDTO struct {
-	ID       uuid.UUID      `json:"id"`
-	GroupID  uuid.UUID      `json:"group_id"`
-	User     UserSummaryDTO `json:"user"`
-	UserID   uuid.UUID      `json:"user_id"`
-	Role     string         `json:"role"`
-	JoinedAt time.Time      `json:"joined_at"`
-}
-
-type UserSummaryDTO struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	ID       uuid.UUID     `json:"id"`
+	GroupID  uuid.UUID     `json:"group_id"`
+	User     *auth.UserDTO `json:"user,omitempty"`
+	UserID   uuid.UUID     `json:"user_id"`
+	Role     string        `json:"role"`
+	JoinedAt time.Time     `json:"joined_at"`
 }
 
 func (m *Membership) ToDTO() MemberDTO {
@@ -26,5 +22,6 @@ func (m *Membership) ToDTO() MemberDTO {
 		UserID:   m.UserID,
 		Role:     string(m.Role),
 		JoinedAt: m.CreatedAt,
+		User:     m.User,
 	}
 }
