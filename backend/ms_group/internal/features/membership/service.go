@@ -106,7 +106,7 @@ func (s *MembershipService) FindByGroupID(ctx context.Context, groupID uuid.UUID
 
 	for _, m := range members {
 		if u, ok := userMap[m.UserID]; ok {
-			m.User = &u
+			m.User = mapUserToMemberUser(u)
 		}
 	}
 
@@ -132,7 +132,7 @@ func (s *MembershipService) FindByGroupIDAndUserID(ctx context.Context, groupID,
 			"group_id", groupID, "error", err)
 		return nil, err
 	}
-	m.User = &user
+	m.User = mapUserToMemberUser(user)
 
 	return m, nil
 }
@@ -200,4 +200,12 @@ func (s *MembershipService) Remove(ctx context.Context, groupID, userID uuid.UUI
 
 func (s *MembershipService) SetGroupFinder(gf groupFinder) {
 	s.groupFinder = gf
+}
+
+func mapUserToMemberUser(u user.UserDTO) *MemberUser {
+	return &MemberUser{
+		ID:    u.ID,
+		Name:  u.Name,
+		Email: u.Email,
+	}
 }

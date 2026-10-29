@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"uuid"
 )
 
 var (
@@ -72,5 +73,13 @@ func (v *Validator) CheckStringMaxLen(
 	maxLen int,
 	name string,
 ) {
-	v.Check(len(value) <= maxLen, "password", fmt.Sprintf("must not be more than %d bytes long", maxLen))
+	v.Check(len(value) <= maxLen, name, fmt.Sprintf("must not be more than %d bytes long", maxLen))
+}
+
+func (v *Validator) CheckUUIDNotNil(id uuid.UUID, name string) {
+	v.Check(id != uuid.Nil(), name, "must be provided")
+}
+
+func (v *Validator) CheckSliceNotEmpty[T any](s []T, name string) {
+	v.Check(len(s) > 0, name, "must contain at least one item")
 }

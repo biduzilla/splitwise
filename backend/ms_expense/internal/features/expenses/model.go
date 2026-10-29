@@ -1,6 +1,7 @@
-package expense
+package expenses
 
 import (
+	"shared/models"
 	"time"
 	"uuid"
 )
@@ -8,8 +9,8 @@ import (
 type SplitMode string
 
 const (
-	SplitEqual SplitMode = "equal"
-	SplitExact SplitMode = "exact"
+	SplitModeEqual SplitMode = "equal"
+	SplitModeExact SplitMode = "exact"
 )
 
 type Expense struct {
@@ -21,13 +22,8 @@ type Expense struct {
 	Category    *string
 	SplitMode   SplitMode
 	ExpenseDate time.Time
-	Version     int
-	CreatedBy   uuid.UUID
-	CreatedAt   time.Time
-	UpdatedAt   *time.Time
-	UpdatedBy   *uuid.UUID
-	Deleted     bool
-	Shares      []Share
+	models.BaseModel
+	Shares []Share
 }
 
 type Share struct {
