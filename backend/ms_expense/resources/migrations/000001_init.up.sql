@@ -24,7 +24,7 @@ CREATE INDEX idx_expenses_paid_by
     ON exp.expenses(paid_by)
     WHERE deleted = false;
 
-CREATE TABLE IF NOT EXIST expense_shares (
+CREATE TABLE IF NOT EXISTS expense_shares (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     expense_id  UUID NOT NULL REFERENCES expenses(id) ON DELETE CASCADE,
     user_id     UUID NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXIST expense_shares (
 CREATE INDEX idx_shares_expense ON exp.expense_shares(expense_id);
 CREATE INDEX idx_shares_user    ON exp.expense_shares(user_id);
 
-CREATE TABLE IF NOT EXIST idempotency_keys (
+CREATE TABLE IF NOT EXISTS idempotency_keys (
     key             UUID PRIMARY KEY,
     user_id         UUID NOT NULL,
     endpoint        TEXT NOT NULL,

@@ -52,9 +52,9 @@ func NewClient(baseURL string, timout time.Duration) *HTTPClient {
 func (c *HTTPClient) GetGroup(
 	ctx context.Context,
 	id uuid.UUID,
-) (GroupDTO, error) {
+) (GroupDetailDTO, error) {
 	path := "/" + id.String()
-	var response GroupDTO
+	var response GroupDetailDTO
 	err := c.base.Get(ctx, path, &response, func(status int, body []byte) error {
 		switch status {
 		case http.StatusNotFound:
@@ -66,7 +66,7 @@ func (c *HTTPClient) GetGroup(
 		}
 	})
 	if err != nil {
-		return GroupDTO{}, nil
+		return GroupDetailDTO{}, nil
 	}
 	return response, nil
 }
