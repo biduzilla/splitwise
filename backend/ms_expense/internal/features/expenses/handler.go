@@ -41,6 +41,14 @@ func NewHandler(
 	}
 }
 
+type handler interface {
+	Create(w http.ResponseWriter, r *http.Request)
+	Get(w http.ResponseWriter, r *http.Request)
+	List(w http.ResponseWriter, r *http.Request)
+	Update(w http.ResponseWriter, r *http.Request)
+	Delete(w http.ResponseWriter, r *http.Request)
+}
+
 func (h *ExpenseHandler) Create(w http.ResponseWriter, r *http.Request) {
 	tracer := otel.Tracer("ms_expense/internal/features/expense")
 	ctx, span := tracer.Start(r.Context(), "ExpenseHandler.Create")

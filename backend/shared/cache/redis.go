@@ -89,3 +89,15 @@ func (r *RedisCache) DeleteByPrefix(ctx context.Context, prefix string) error {
 	}
 	return nil
 }
+
+func (r *RedisCache) SetNX(ctx context.Context, key string, value any, ttl *time.Duration) (bool, error) {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return false, err
+	}
+	t := ttl
+	if t == nil {
+		t = &r.ttl
+	}
+	return r.client.SetNX(ctx, key, data, *t).Result()
+}
