@@ -15,15 +15,24 @@ import (
 )
 
 type service interface {
-	Create(ctx context.Context, in CreateExpenseDTO) (*ExpenseDTO, error)
-	FindByID(ctx context.Context, id uuid.UUID) (*ExpenseDTO, error)
+	Create(
+		ctx context.Context,
+		model *Expense,
+		participants []uuid.UUID,
+	) error
+	FindByID(ctx context.Context, id uuid.UUID) (*Expense, error)
 	FindAll(
 		ctx context.Context,
 		groupID uuid.UUID,
 		f filters.Filters,
 		startDate, endDate *time.Time,
 	) ([]*Expense, filters.Metadata, error)
-	Update(ctx context.Context, id uuid.UUID, in UpdateExpenseDTO) (*ExpenseDTO, error)
+	Update(
+		ctx context.Context,
+		id uuid.UUID,
+		participants []uuid.UUID,
+		model *Expense,
+	) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 

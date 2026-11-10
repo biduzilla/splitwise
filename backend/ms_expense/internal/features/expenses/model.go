@@ -31,6 +31,27 @@ type Expense struct {
 	Shares []Share
 }
 
+func (e *Expense) ToDTO() ExpenseDTO {
+	sharesDto := make([]ShareDTO, len(e.Shares))
+	for i, s := range e.Shares {
+		sharesDto[i] = s.ToDTO()
+	}
+
+	return ExpenseDTO{
+		ID:          e.ID,
+		GroupID:     e.GroupID,
+		PaidBy:      e.PaidBy,
+		Amount:      e.Amount,
+		Description: e.Description,
+		Category:    e.Category,
+		SplitMode:   e.SplitMode,
+		ExpenseDate: e.ExpenseDate.String(),
+		Version:     e.Version,
+		CreatedAt:   e.CreatedAt,
+		Shares:      sharesDto,
+	}
+}
+
 func (d Expense) Validate(v *validator.Validator) {
 	v.CheckUUIDNotNil(d.GroupID, "group_id")
 	v.CheckUUIDNotNil(d.PaidBy, "paid_by")
@@ -80,4 +101,11 @@ func (d Expense) Validate(v *validator.Validator) {
 type Share struct {
 	UserID uuid.UUID
 	Amount int64
+}
+
+func (m *Share) ToDTO() ShareDTO {
+	return ShareDTO{
+		UserID: m.UserID,
+		Amount: m.Amount,
+	}
 }
