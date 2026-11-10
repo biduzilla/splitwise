@@ -16,7 +16,7 @@ func main() {
 	cfg.Base.Server.Port = 4003
 	cfg.Base.Server.Timeout = 5 * time.Second
 
-	cfg.Base.DB.DSN = "postgres://rateio_user:rateio_password@localhost:5432/rateio_db?sslmode=disable"
+	cfg.Base.DB.DSN = "postgres://rateio_user:rateio_password@localhost:5432/rateio_db?sslmode=disable&search_path=exp"
 	cfg.Base.DB.MaxOpenConns = 25
 	cfg.Base.DB.MaxIdleConns = 25
 	cfg.Base.DB.MaxIdleTime = "15m"
@@ -32,6 +32,11 @@ func main() {
 	cfg.Base.Cache.Db = 0
 
 	cfg.Base.Otel.Port = "localhost:4318"
+
+	cfg.Clients.GroupURL = "http://localhost:4002/v1/groups"
+
+	cfg.Kafka.Brokers = []string{"localhost:9094"}
+	cfg.Kafka.GroupID = "ms_expense_group"
 
 	app, err := api.NewApp(cfg)
 	if err != nil || app == nil {
