@@ -60,17 +60,21 @@ type producer interface {
 type ExpenseService struct {
 	repo        repository
 	we          writeExecutor
-	groupClient groups.HTTPClient
+	groupClient groupClient
 	producer    producer
 	kb          cache.KeyBuilder
 	cache       cache.Cache
 	logger      *slog.Logger
 }
 
+type groupClient interface {
+	GetGroup(ctx context.Context, id uuid.UUID) (groups.GroupDetailDTO, error)
+}
+
 func NewService(
 	repo repository,
 	we writeExecutor,
-	groupClient groups.HTTPClient,
+	groupClient groupClient,
 	producer producer,
 	kb cache.KeyBuilder,
 	c cache.Cache,

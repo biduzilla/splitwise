@@ -10,6 +10,14 @@ type PublisherExpense struct {
 	producer *messaging.Producer
 }
 
+func NewPublisherExpense(
+	producer *messaging.Producer,
+) *PublisherExpense {
+	return &PublisherExpense{
+		producer: producer,
+	}
+}
+
 func (p *PublisherExpense) PublishExpenseCreated(
 	ctx context.Context,
 	event expenses.ExpenseCreated,

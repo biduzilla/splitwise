@@ -53,6 +53,7 @@ type mockCache struct {
 	setFn            func(ctx context.Context, key string, value any, ttl *time.Duration) error
 	deleteFn         func(ctx context.Context, keys ...string) error
 	deleteByPrefixFn func(ctx context.Context, prefix string) error
+	setNXFn          func(ctx context.Context, key string, value any, ttl *time.Duration) (bool, error)
 }
 
 func (m *mockCache) Get(ctx context.Context, key string, dest any) error {
@@ -61,6 +62,14 @@ func (m *mockCache) Get(ctx context.Context, key string, dest any) error {
 	}
 	return errors.New("cache miss")
 }
+
+func (m *mockCache) SetNX(ctx context.Context, key string, value any, ttl *time.Duration) (bool, error) {
+	if m.setFn != nil {
+		return true, m.setFn(ctx, key, value, ttl)
+	}
+	return false, errors.New("cache miss")
+}
+
 func (m *mockCache) Set(ctx context.Context, key string, value any, ttl *time.Duration) error {
 	if m.setFn != nil {
 		return m.setFn(ctx, key, value, ttl)

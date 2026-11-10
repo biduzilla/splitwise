@@ -12,6 +12,18 @@ type ExpenseRouter struct {
 	idemMw  idemMw
 }
 
+func NewRouter(
+	handler handler,
+	authMw authMiddleware,
+	idemMw idemMw,
+) *ExpenseRouter {
+	return &ExpenseRouter{
+		handler: handler,
+		authMw:  authMw,
+		idemMw:  idemMw,
+	}
+}
+
 type idemMw interface {
 	Wrap(next http.Handler) http.Handler
 }
