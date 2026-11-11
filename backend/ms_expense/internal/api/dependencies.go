@@ -10,7 +10,6 @@ import (
 )
 
 type dependencies struct {
-	modules *modules
 	routers *Router
 }
 
@@ -63,7 +62,6 @@ func (app *application) buildDependencies(shutdown chan struct{}) (*dependencies
 	)
 
 	return &dependencies{
-		modules: modules,
 		routers: router,
 	}, nil
 }

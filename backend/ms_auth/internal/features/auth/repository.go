@@ -12,7 +12,7 @@ import (
 	"uuid"
 )
 
-type RefreshTokenRepository struct {
+type refreshTokenRepository struct {
 	db     *sql.DB
 	logger *slog.Logger
 }
@@ -41,17 +41,17 @@ type repository interface {
 	) error
 }
 
-func NewRepository(
+func newRepository(
 	db *sql.DB,
 	logger *slog.Logger,
-) *RefreshTokenRepository {
-	return &RefreshTokenRepository{
+) *refreshTokenRepository {
+	return &refreshTokenRepository{
 		db:     db,
 		logger: logger.WithGroup("db"),
 	}
 }
 
-func (r *RefreshTokenRepository) FindByTokenHash(
+func (r *refreshTokenRepository) FindByTokenHash(
 	ctx context.Context,
 	tokenHash string,
 ) (*RefreshToken, error) {
@@ -100,7 +100,7 @@ func (r *RefreshTokenRepository) FindByTokenHash(
 	return &model, nil
 }
 
-func (r *RefreshTokenRepository) RevokeAllByFamily(
+func (r *refreshTokenRepository) RevokeAllByFamily(
 	ctx context.Context,
 	family uuid.UUID,
 ) error {
@@ -141,7 +141,7 @@ func (r *RefreshTokenRepository) RevokeAllByFamily(
 	return nil
 }
 
-func (r *RefreshTokenRepository) Insert(
+func (r *refreshTokenRepository) Insert(
 	ctx context.Context,
 	model *RefreshToken,
 ) error {
@@ -194,7 +194,7 @@ func (r *RefreshTokenRepository) Insert(
 	return nil
 }
 
-func (r *RefreshTokenRepository) Update(ctx context.Context, model *RefreshToken) error {
+func (r *refreshTokenRepository) Update(ctx context.Context, model *RefreshToken) error {
 	userAuth := contexts.GetUser(ctx)
 
 	query := `
@@ -236,7 +236,7 @@ func (r *RefreshTokenRepository) Update(ctx context.Context, model *RefreshToken
 	return nil
 }
 
-func (r *RefreshTokenRepository) DeleteById(
+func (r *refreshTokenRepository) DeleteById(
 	ctx context.Context,
 	id uuid.UUID,
 ) error {

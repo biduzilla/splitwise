@@ -15,7 +15,7 @@ import (
 )
 
 type expenseHandler struct {
-	service    Service
+	service    service
 	errHandler errHandler
 	safeSort   []string
 }
@@ -29,7 +29,7 @@ type errHandler interface {
 }
 
 func newHandler(
-	s Service,
+	s service,
 	errHandler errHandler,
 ) *expenseHandler {
 	return &expenseHandler{

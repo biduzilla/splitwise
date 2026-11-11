@@ -13,8 +13,8 @@ import (
 	"go.opentelemetry.io/otel/codes"
 )
 
-type UserHandler struct {
-	userService userService
+type userHandler struct {
+	userService service
 	errHandler  errorHandler
 }
 
@@ -22,7 +22,7 @@ type errorHandler interface {
 	HandlerError(w http.ResponseWriter, r *http.Request, err error)
 }
 
-type userHandler interface {
+type handler interface {
 	SignUp(
 		w http.ResponseWriter,
 		r *http.Request,
@@ -54,17 +54,17 @@ type userHandler interface {
 	)
 }
 
-func NewHandler(
-	userService userService,
+func newHandler(
+	userService service,
 	errorHandler errorHandler,
-) *UserHandler {
-	return &UserHandler{
+) *userHandler {
+	return &userHandler{
 		userService: userService,
 		errHandler:  errorHandler,
 	}
 }
 
-func (h *UserHandler) FindById(
+func (h *userHandler) FindById(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
@@ -92,7 +92,7 @@ func (h *UserHandler) FindById(
 	httputils.Respond(w, r, http.StatusOK, g.ToDTO(), nil, h.errHandler)
 }
 
-func (h *UserHandler) FindAllByIds(
+func (h *userHandler) FindAllByIds(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
@@ -153,7 +153,7 @@ func (h *UserHandler) FindAllByIds(
 	)
 }
 
-func (h *UserHandler) SignUp(
+func (h *userHandler) SignUp(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
@@ -188,7 +188,7 @@ func (h *UserHandler) SignUp(
 	httputils.Respond(w, r, http.StatusCreated, user.ToDTO(), nil, h.errHandler)
 }
 
-func (h *UserHandler) FindAll(
+func (h *userHandler) FindAll(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
@@ -249,7 +249,7 @@ func (h *UserHandler) FindAll(
 	)
 }
 
-func (h *UserHandler) Update(
+func (h *userHandler) Update(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
@@ -289,7 +289,7 @@ func (h *UserHandler) Update(
 	httputils.Respond(w, r, http.StatusOK, model.ToDTO(), nil, h.errHandler)
 }
 
-func (h *UserHandler) DeleteById(
+func (h *userHandler) DeleteById(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {

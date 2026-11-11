@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -14,13 +13,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
-
-type router interface {
-	RegisterRoutes(db *sql.DB) *chi.Mux
-}
 
 func (app *application) Server() error {
 	defer app.db.Close()

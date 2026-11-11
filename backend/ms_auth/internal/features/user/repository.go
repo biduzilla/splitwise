@@ -16,16 +16,16 @@ import (
 	"github.com/lib/pq"
 )
 
-type UserRepository struct {
+type userRepository struct {
 	db     *sql.DB
 	logger *slog.Logger
 }
 
-func NewRepository(
+func newRepository(
 	db *sql.DB,
 	logger *slog.Logger,
-) *UserRepository {
-	return &UserRepository{
+) *userRepository {
+	return &userRepository{
 		db:     db,
 		logger: logger.WithGroup("db"),
 	}
@@ -77,7 +77,7 @@ type repository interface {
 	) error
 }
 
-func (r *UserRepository) FindAll(
+func (r *userRepository) FindAll(
 	ctx context.Context,
 	search string,
 	f filters.Filters,
@@ -148,7 +148,7 @@ func (r *UserRepository) FindAll(
 	return users, metadata, nil
 }
 
-func (r *UserRepository) FindById(
+func (r *userRepository) FindById(
 	ctx context.Context,
 	id uuid.UUID,
 ) (*User, error) {
@@ -195,7 +195,7 @@ func (r *UserRepository) FindById(
 	return &model, nil
 }
 
-func (r *UserRepository) FindAllByIds(
+func (r *userRepository) FindAllByIds(
 	ctx context.Context,
 	ids []uuid.UUID,
 	f filters.Filters,
@@ -267,7 +267,7 @@ func (r *UserRepository) FindAllByIds(
 	return users, metadata, nil
 }
 
-func (r *UserRepository) FindByEmail(
+func (r *userRepository) FindByEmail(
 	ctx context.Context,
 	email string,
 ) (*User, error) {
@@ -314,7 +314,7 @@ func (r *UserRepository) FindByEmail(
 	return &model, nil
 }
 
-func (r *UserRepository) Insert(
+func (r *userRepository) Insert(
 	ctx context.Context,
 	model *User,
 ) error {
@@ -365,7 +365,7 @@ func (r *UserRepository) Insert(
 	return nil
 }
 
-func (r *UserRepository) Update(
+func (r *userRepository) Update(
 	ctx context.Context,
 	model *User,
 ) error {
@@ -416,7 +416,7 @@ func (r *UserRepository) Update(
 	return nil
 }
 
-func (r *UserRepository) DeleteById(
+func (r *userRepository) DeleteById(
 	ctx context.Context,
 	id uuid.UUID,
 ) error {

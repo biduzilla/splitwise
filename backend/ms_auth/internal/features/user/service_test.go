@@ -130,7 +130,7 @@ func TestSignUp_Sucess(t *testing.T) {
 			return nil
 		},
 	}
-	svc := NewService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
+	svc := newService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
 
 	user, err := svc.SignUp(context.Background(), req)
 
@@ -161,7 +161,7 @@ func TestSignUp_InvalidPassword_MissingLetter(t *testing.T) {
 		},
 	}
 
-	svc := NewService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
+	svc := newService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
 
 	_, err := svc.SignUp(context.Background(), req)
 
@@ -183,7 +183,7 @@ func TestSignUp_InvalidPassword_MissingDigit(t *testing.T) {
 			return nil
 		},
 	}
-	svc := NewService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
+	svc := newService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
 
 	_, err := svc.SignUp(context.Background(), req)
 
@@ -200,7 +200,7 @@ func TestSignUp_ErrorFromInsert(t *testing.T) {
 			return expectedErr
 		},
 	}
-	svc := NewService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
+	svc := newService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
 
 	_, err := svc.SignUp(context.Background(), req)
 
@@ -222,7 +222,7 @@ func TestFindAll_Success_FromDB(t *testing.T) {
 			return errors.New("cache miss")
 		},
 	}
-	svc := NewService(repo, cacheMock, &mockKeyBuilder{}, &mockWriteExecutor{})
+	svc := newService(repo, cacheMock, &mockKeyBuilder{}, &mockWriteExecutor{})
 
 	users, meta, err := svc.FindAll(context.Background(), "joao", filters.Filters{Page: 1, PageSize: 10, Sort: "name"})
 
@@ -244,7 +244,7 @@ func TestFindAll_Error(t *testing.T) {
 		},
 	}
 	cacheMock := &mockCache{getFn: func(ctx context.Context, key string, dest any) error { return errors.New("miss") }}
-	svc := NewService(repo, cacheMock, &mockKeyBuilder{}, &mockWriteExecutor{})
+	svc := newService(repo, cacheMock, &mockKeyBuilder{}, &mockWriteExecutor{})
 
 	_, _, err := svc.FindAll(context.Background(), "", filters.Filters{Page: 1, PageSize: 10, Sort: "name"})
 
@@ -262,7 +262,7 @@ func TestFindById_NotFound(t *testing.T) {
 		},
 	}
 	cacheMock := &mockCache{getFn: func(ctx context.Context, key string, dest any) error { return errors.New("miss") }}
-	svc := NewService(repo, cacheMock, &mockKeyBuilder{}, &mockWriteExecutor{})
+	svc := newService(repo, cacheMock, &mockKeyBuilder{}, &mockWriteExecutor{})
 
 	_, err := svc.FindById(context.Background(), uuid.New())
 
@@ -279,7 +279,7 @@ func TestFindById_Success(t *testing.T) {
 		},
 	}
 	cacheMock := &mockCache{getFn: func(ctx context.Context, key string, dest any) error { return errors.New("miss") }}
-	svc := NewService(repo, cacheMock, &mockKeyBuilder{}, &mockWriteExecutor{})
+	svc := newService(repo, cacheMock, &mockKeyBuilder{}, &mockWriteExecutor{})
 
 	result, err := svc.FindById(context.Background(), expected.ID)
 
@@ -302,7 +302,7 @@ func TestInsert_ValidationFailure(t *testing.T) {
 			return nil
 		},
 	}
-	svc := NewService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
+	svc := newService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
 
 	err := svc.Insert(context.Background(), invalidModel)
 
@@ -323,7 +323,7 @@ func TestInsert_Success(t *testing.T) {
 			return nil
 		},
 	}
-	svc := NewService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
+	svc := newService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
 
 	err := svc.Insert(context.Background(), validModel)
 
@@ -344,7 +344,7 @@ func TestUpdate_ValidationFailure(t *testing.T) {
 			return nil
 		},
 	}
-	svc := NewService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
+	svc := newService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
 
 	err := svc.Update(context.Background(), invalidModel)
 
@@ -365,7 +365,7 @@ func TestUpdate_Success(t *testing.T) {
 			return nil
 		},
 	}
-	svc := NewService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
+	svc := newService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
 
 	err := svc.Update(context.Background(), validModel)
 
@@ -384,7 +384,7 @@ func TestUpdate_RepoError(t *testing.T) {
 			return apierror.ErrEditConflict
 		},
 	}
-	svc := NewService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
+	svc := newService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
 
 	err := svc.Update(context.Background(), validModel)
 
@@ -401,7 +401,7 @@ func TestDeleteById_Success(t *testing.T) {
 			return nil
 		},
 	}
-	svc := NewService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
+	svc := newService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
 
 	err := svc.DeleteById(context.Background(), uuid.New())
 
@@ -419,7 +419,7 @@ func TestDeleteById_RepoError(t *testing.T) {
 			return apierror.ErrRecordNotFound
 		},
 	}
-	svc := NewService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
+	svc := newService(repo, &mockCache{}, &mockKeyBuilder{}, &mockWriteExecutor{})
 
 	err := svc.DeleteById(context.Background(), uuid.New())
 

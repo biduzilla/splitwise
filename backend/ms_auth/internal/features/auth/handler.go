@@ -16,35 +16,35 @@ import (
 	"shared/httpx/httputils"
 )
 
-type AuthHandler struct {
-	authService authService
-	errHandler  errorHandler
+type authHandler struct {
+	service    service
+	errHandler errorHandler
 }
 
 type errorHandler interface {
 	HandlerError(w http.ResponseWriter, r *http.Request, err error)
 }
 
-type authService interface {
+type service interface {
 	Authenticate(ctx context.Context, email, password string) (*TokenResponse, error)
 	RefreshToken(ctx context.Context, refreshToken string) (*TokenResponse, error)
 	Logout(ctx context.Context, refreshToken string) error
 	ValidateAccessToken(token string) bool
 }
 
-func NewHandler(
-	authService authService,
+func newHandler(
+	service service,
 	errHandler errorHandler,
-) *AuthHandler {
-	return &AuthHandler{
-		authService: authService,
-		errHandler:  errHandler,
+) *authHandler {
+	return &authHandler{
+		service:    service,
+		errHandler: errHandler,
 	}
 }
 
-func (h *AuthHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
+func (h *authHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
 	tracer := otel.Tracer("ms_auth/internal/features/auth")
-	ctx, span := tracer.Start(r.Context(), "AuthHandler.Authenticate")
+	ctx, span := tracer.Start(r.Context(), "authHandler.Authenticate")
 	defer span.End()
 
 	var input struct {
@@ -65,7 +65,7 @@ func (h *AuthHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
 
 	span.SetAttributes(attribute.String("user.email", input.Email))
 
-	token, err := h.authService.Authenticate(ctx, input.Email, input.Password)
+	token, err := h.service.Authenticate(ctx, input.Email, input.Password)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Authentication failed")
@@ -80,9 +80,9 @@ func (h *AuthHandler) Authenticate(w http.ResponseWriter, r *http.Request) {
 	httputils.Respond(w, r, http.StatusOK, map[string]bool{"ok": true}, nil, h.errHandler)
 }
 
-func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
+func (h *authHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	tracer := otel.Tracer("ms_auth/internal/features/auth")
-	ctx, span := tracer.Start(r.Context(), "AuthHandler.RefreshToken")
+	ctx, span := tracer.Start(r.Context(), "authHandler.RefreshToken")
 	defer span.End()
 
 	refreshToken := cookies.RefreshTokenFromRequest(r)
@@ -96,7 +96,7 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.authService.RefreshToken(ctx, refreshToken)
+	token, err := h.service.RefreshToken(ctx, refreshToken)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Refresh token failed")
@@ -111,14 +111,14 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	httputils.Respond(w, r, http.StatusOK, map[string]bool{"ok": true}, nil, h.errHandler)
 }
 
-func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+func (h *authHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	tracer := otel.Tracer("ms_auth/internal/features/auth")
-	ctx, span := tracer.Start(r.Context(), "AuthHandler.Logout")
+	ctx, span := tracer.Start(r.Context(), "authHandler.Logout")
 	defer span.End()
 
 	refreshToken := cookies.RefreshTokenFromRequest(r)
 	if refreshToken != "" {
-		_ = h.authService.Logout(ctx, refreshToken)
+		_ = h.service.Logout(ctx, refreshToken)
 	}
 
 	cookies.ClearAuthCookies(w)
@@ -127,9 +127,9 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	httputils.Respond(w, r, http.StatusNoContent, nil, nil, h.errHandler)
 }
 
-func (h *AuthHandler) Session(w http.ResponseWriter, r *http.Request) {
+func (h *authHandler) Session(w http.ResponseWriter, r *http.Request) {
 	tracer := otel.Tracer("ms_auth/internal/features/auth")
-	_, span := tracer.Start(r.Context(), "AuthHandler.Session")
+	_, span := tracer.Start(r.Context(), "authHandler.Session")
 	defer span.End()
 
 	user := contexts.GetUser(r.Context())
@@ -141,7 +141,7 @@ func (h *AuthHandler) Session(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token := cookies.TokenFromRequest(r)
-	authenticated := token != "" && h.authService.ValidateAccessToken(token)
+	authenticated := token != "" && h.service.ValidateAccessToken(token)
 	if !authenticated {
 		httputils.Respond(w, r, http.StatusOK,
 			SessionResponse{Authenticated: authenticated}, nil, h.errHandler)

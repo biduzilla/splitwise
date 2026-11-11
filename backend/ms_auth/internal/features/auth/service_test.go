@@ -164,7 +164,7 @@ func TestAuthenticate_Success(t *testing.T) {
 		},
 	}
 
-	svc := NewService(jwt, users, repo, &mockTxManager{})
+	svc := newService(jwt, users, repo, &mockTxManager{})
 
 	resp, err := svc.Authenticate(context.Background(), validUser.Email, "Senha123A")
 
@@ -197,7 +197,7 @@ func TestAuthenticate_InvalidCredentials_UserNotFound(t *testing.T) {
 		},
 	}
 
-	svc := NewService(jwt, users, repo, &mockTxManager{})
+	svc := newService(jwt, users, repo, &mockTxManager{})
 
 	_, err := svc.Authenticate(context.Background(), "naoexiste@empresa.com", "qualquer123A")
 
@@ -221,7 +221,7 @@ func TestAuthenticate_InactiveAccount(t *testing.T) {
 		},
 	}
 
-	svc := NewService(jwt, users, repo, &mockTxManager{})
+	svc := newService(jwt, users, repo, &mockTxManager{})
 
 	_, err := svc.Authenticate(context.Background(), user.Email, "Senha123A")
 
@@ -241,7 +241,7 @@ func TestAuthenticate_WrongPassword(t *testing.T) {
 		},
 	}
 
-	svc := NewService(jwt, users, repo, &mockTxManager{})
+	svc := newService(jwt, users, repo, &mockTxManager{})
 
 	_, err := svc.Authenticate(context.Background(), user.Email, "SenhaErrada1")
 
@@ -292,7 +292,7 @@ func TestRefreshToken_Success(t *testing.T) {
 		},
 	}
 
-	svc := NewService(jwt, users, repo, &mockTxManager{})
+	svc := newService(jwt, users, repo, &mockTxManager{})
 
 	resp, err := svc.RefreshToken(context.Background(), "refresh-token-antigo")
 
@@ -345,7 +345,7 @@ func TestRefreshToken_RevokedToken_RevokesFamily(t *testing.T) {
 		},
 	}
 
-	svc := NewService(jwt, users, repo, &mockTxManager{})
+	svc := newService(jwt, users, repo, &mockTxManager{})
 
 	_, err := svc.RefreshToken(context.Background(), "refresh-token-revogado")
 
@@ -380,7 +380,7 @@ func TestLogout_Success(t *testing.T) {
 	jwt := &mockJWTService{}
 	users := &mockUserService{}
 
-	svc := NewService(jwt, users, repo, &mockTxManager{})
+	svc := newService(jwt, users, repo, &mockTxManager{})
 
 	err := svc.Logout(context.Background(), "refresh-token-valido")
 
@@ -414,7 +414,7 @@ func TestLogout_TokenNotFound_Idempotent(t *testing.T) {
 	jwt := &mockJWTService{}
 	users := &mockUserService{}
 
-	svc := NewService(jwt, users, repo, &mockTxManager{})
+	svc := newService(jwt, users, repo, &mockTxManager{})
 
 	err := svc.Logout(context.Background(), "token-inexistente")
 

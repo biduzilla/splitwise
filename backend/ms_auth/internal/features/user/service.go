@@ -12,14 +12,14 @@ import (
 	"uuid"
 )
 
-type UserService struct {
+type userService struct {
 	repo       repository
 	cache      cache.Cache
 	keyBuilder cache.KeyBuilder
-	we         WriteExecutor
+	we         writeExecutor
 }
 
-type userService interface {
+type service interface {
 	SignUp(
 		ctx context.Context,
 		req CreateUserDTO,
@@ -61,17 +61,17 @@ type userService interface {
 	) error
 }
 
-type WriteExecutor interface {
+type writeExecutor interface {
 	Execute(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
-func NewService(
+func newService(
 	repo repository,
 	cache cache.Cache,
 	keyBuilder cache.KeyBuilder,
-	we WriteExecutor,
-) *UserService {
-	return &UserService{
+	we writeExecutor,
+) *userService {
+	return &userService{
 		repo:       repo,
 		cache:      cache,
 		keyBuilder: keyBuilder,
@@ -79,7 +79,7 @@ func NewService(
 	}
 }
 
-func (s *UserService) SignUp(
+func (s *userService) SignUp(
 	ctx context.Context,
 	req CreateUserDTO,
 ) (*User, error) {
@@ -104,7 +104,7 @@ func (s *UserService) SignUp(
 	return user, err
 }
 
-func (s *UserService) FindAllByIds(
+func (s *userService) FindAllByIds(
 	ctx context.Context,
 	ids []uuid.UUID,
 	f filters.Filters,
@@ -147,7 +147,7 @@ func (s *UserService) FindAllByIds(
 	return payload.Users, payload.Metadata, nil
 }
 
-func (s *UserService) FindAll(
+func (s *userService) FindAll(
 	ctx context.Context,
 	search string,
 	f filters.Filters,
@@ -181,7 +181,7 @@ func (s *UserService) FindAll(
 	return payload.Users, payload.Metadata, nil
 }
 
-func (s *UserService) FindById(
+func (s *userService) FindById(
 	ctx context.Context,
 	id uuid.UUID,
 ) (*User, error) {
@@ -192,7 +192,7 @@ func (s *UserService) FindById(
 	})
 }
 
-func (s *UserService) FindByEmail(
+func (s *userService) FindByEmail(
 	ctx context.Context,
 	email string,
 ) (*User, error) {
@@ -203,7 +203,7 @@ func (s *UserService) FindByEmail(
 	})
 }
 
-func (s *UserService) Insert(
+func (s *userService) Insert(
 	ctx context.Context,
 	model *User,
 ) error {
@@ -218,7 +218,7 @@ func (s *UserService) Insert(
 	})
 }
 
-func (s *UserService) Update(
+func (s *userService) Update(
 	ctx context.Context,
 	model *User,
 ) error {
@@ -232,7 +232,7 @@ func (s *UserService) Update(
 	})
 }
 
-func (s *UserService) DeleteById(
+func (s *userService) DeleteById(
 	ctx context.Context,
 	id uuid.UUID,
 ) error {

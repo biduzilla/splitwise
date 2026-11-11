@@ -14,7 +14,7 @@ import (
 	"uuid"
 )
 
-type Service interface {
+type service interface {
 	Create(
 		ctx context.Context,
 		model *Expense,

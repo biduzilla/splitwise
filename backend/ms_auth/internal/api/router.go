@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"expvar"
 	"fmt"
-	"ms_auth/internal/features/auth"
-	"ms_auth/internal/features/user"
 	"net/http"
 	"shared/apierror"
 	"shared/obs/metrics"
@@ -30,23 +28,25 @@ type errorHandler interface {
 	HandlerError(w http.ResponseWriter, r *http.Request, err error)
 }
 
+type routes interface {
+	RegisterRoutes(mux chi.Router)
+}
+
 type Router struct {
 	errHandler errorHandler
 	m          mw
-	user       *user.UserRouter
-	auth       *auth.AuthRouter
+	routes     []routes
 }
 
 func NewRouter(
-	handlers *handlers,
+	routes []routes,
 	errHandler errorHandler,
 	m mw,
 ) *Router {
 	return &Router{
 		m:          m,
 		errHandler: errHandler,
-		user:       user.NewRouter(handlers.user, m),
-		auth:       auth.NewRouter(handlers.auth),
+		routes:     routes,
 	}
 }
 
@@ -81,8 +81,9 @@ func (router *Router) RegisterRoutes(db *sql.DB) *chi.Mux {
 		r.Use(router.m.EnableCORS)
 		r.Use(router.m.Authenticate)
 
-		router.user.Routes(r)
-		router.auth.Routes(r)
+		for _, route := range router.routes {
+			route.RegisterRoutes(r)
+		}
 	})
 
 	return r

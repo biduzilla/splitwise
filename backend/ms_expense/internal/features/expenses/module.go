@@ -10,7 +10,7 @@ import (
 )
 
 type Module struct {
-	service *expenseService
+	Service *expenseService
 	router  *expenseRouter
 }
 
@@ -42,10 +42,9 @@ func NewModule(
 	router := newRouter(handler, authMw, idemMw)
 
 	return &Module{
-		service: service,
+		Service: service,
 		router:  router,
 	}
 }
 
 func (m *Module) RegisterRoutes(r chi.Router) { m.router.Register(r) }
-func (m *Module) Service() Service            { return m.service }

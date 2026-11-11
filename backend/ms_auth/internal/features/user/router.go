@@ -10,22 +10,22 @@ type authMiddleware interface {
 	RequireActivatedUser(next http.Handler) http.Handler
 }
 
-type UserRouter struct {
-	handler userHandler
+type userRouter struct {
+	handler handler
 	m       authMiddleware
 }
 
-func NewRouter(
-	handler userHandler,
+func newRouter(
+	handler handler,
 	m authMiddleware,
-) *UserRouter {
-	return &UserRouter{
+) *userRouter {
+	return &userRouter{
 		handler: handler,
 		m:       m,
 	}
 }
 
-func (r *UserRouter) Routes(router chi.Router) {
+func (r *userRouter) Register(router chi.Router) {
 	router.Route("/users", func(router chi.Router) {
 		router.Post("/", r.handler.SignUp)
 

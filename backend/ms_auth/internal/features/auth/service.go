@@ -15,7 +15,7 @@ import (
 	"uuid"
 )
 
-type AuthService struct {
+type authService struct {
 	jwtService       jwtService
 	userService      userService
 	refreshTokenRepo repository
@@ -33,13 +33,13 @@ type userService interface {
 	FindByEmail(ctx context.Context, email string) (*user.User, error)
 }
 
-func NewService(
+func newService(
 	jwt jwtService,
 	users userService,
 	refreshRepo repository,
 	tx transaction.Manager,
-) *AuthService {
-	return &AuthService{
+) *authService {
+	return &authService{
 		jwtService:       jwt,
 		userService:      users,
 		refreshTokenRepo: refreshRepo,
@@ -47,7 +47,7 @@ func NewService(
 	}
 }
 
-func (s *AuthService) Authenticate(
+func (s *authService) Authenticate(
 	ctx context.Context,
 	email, password string,
 ) (*TokenResponse, error) {
@@ -91,7 +91,7 @@ func (s *AuthService) Authenticate(
 	}, nil
 }
 
-func (s *AuthService) RefreshToken(
+func (s *authService) RefreshToken(
 	ctx context.Context,
 	refreshToken string,
 ) (*TokenResponse, error) {
@@ -157,7 +157,7 @@ func (s *AuthService) RefreshToken(
 	}, nil
 }
 
-func (s *AuthService) Logout(
+func (s *authService) Logout(
 	ctx context.Context,
 	refreshToken string,
 ) error {
@@ -182,7 +182,7 @@ func (s *AuthService) Logout(
 	})
 }
 
-func (s *AuthService) saveRefreshToken(
+func (s *authService) saveRefreshToken(
 	ctx context.Context,
 	userID uuid.UUID,
 	token string,
@@ -207,7 +207,7 @@ func hashToken(token string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-func (s *AuthService) ValidateAccessToken(token string) bool {
+func (s *authService) ValidateAccessToken(token string) bool {
 	claims, err := s.jwtService.ValidateToken(token, security.TokenTypeAccess)
 	return err == nil && claims != nil
 }
