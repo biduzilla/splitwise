@@ -14,7 +14,7 @@ import (
 	"uuid"
 )
 
-type service interface {
+type Service interface {
 	Create(
 		ctx context.Context,
 		model *Expense,
@@ -57,7 +57,7 @@ type producer interface {
 	) error
 }
 
-type ExpenseService struct {
+type expenseService struct {
 	repo        repository
 	we          writeExecutor
 	groupClient groupClient
@@ -71,7 +71,7 @@ type groupClient interface {
 	GetGroup(ctx context.Context, id uuid.UUID) (groups.GroupDetailDTO, error)
 }
 
-func NewService(
+func newService(
 	repo repository,
 	we writeExecutor,
 	groupClient groupClient,
@@ -79,8 +79,8 @@ func NewService(
 	kb cache.KeyBuilder,
 	c cache.Cache,
 	logger *slog.Logger,
-) *ExpenseService {
-	return &ExpenseService{
+) *expenseService {
+	return &expenseService{
 		repo:        repo,
 		we:          we,
 		groupClient: groupClient,
@@ -91,7 +91,7 @@ func NewService(
 	}
 }
 
-func (s *ExpenseService) Create(
+func (s *expenseService) Create(
 	ctx context.Context,
 	model *Expense,
 	participants []uuid.UUID,
@@ -148,7 +148,7 @@ func (s *ExpenseService) Create(
 	return nil
 }
 
-func (s *ExpenseService) FindByID(
+func (s *expenseService) FindByID(
 	ctx context.Context,
 	id uuid.UUID,
 ) (*Expense, error) {
@@ -167,7 +167,7 @@ func (s *ExpenseService) FindByID(
 	return model, nil
 }
 
-func (s *ExpenseService) FindAll(
+func (s *expenseService) FindAll(
 	ctx context.Context,
 	groupID uuid.UUID,
 	f filters.Filters,
@@ -209,7 +209,7 @@ func (s *ExpenseService) FindAll(
 	return payload.models, payload.metadata, nil
 }
 
-func (s *ExpenseService) Update(
+func (s *expenseService) Update(
 	ctx context.Context,
 	id uuid.UUID,
 	participants []uuid.UUID,
@@ -260,7 +260,7 @@ func (s *ExpenseService) Update(
 	return nil
 }
 
-func (s *ExpenseService) Delete(ctx context.Context, id uuid.UUID) error {
+func (s *expenseService) Delete(ctx context.Context, id uuid.UUID) error {
 	e, err := s.FindByID(ctx, id)
 	if err != nil {
 		return err
@@ -297,7 +297,7 @@ func (s *ExpenseService) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *ExpenseService) mountShares(
+func (s *expenseService) mountShares(
 	model *Expense,
 	groupDetail groups.GroupDetailDTO,
 	participants []uuid.UUID,
@@ -329,7 +329,7 @@ func (s *ExpenseService) mountShares(
 	return shares, nil
 }
 
-func (s *ExpenseService) assertMembership(ctx context.Context, groupID uuid.UUID) error {
+func (s *expenseService) assertMembership(ctx context.Context, groupID uuid.UUID) error {
 	if _, err := s.groupClient.GetGroup(ctx, groupID); err != nil {
 		return err
 	}

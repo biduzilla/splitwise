@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"expvar"
 	"fmt"
-	"ms_expense/internal/features/expenses"
 	"net/http"
 	"shared/apierror"
 	"shared/obs/metrics"
@@ -28,28 +27,25 @@ type mw interface {
 type errorHandler interface {
 	HandlerError(w http.ResponseWriter, r *http.Request, err error)
 }
-
-type idemMw interface {
-	Wrap(next http.Handler) http.Handler
-}
-
 type Router struct {
 	errHandler errorHandler
 	m          mw
-	expenses   *expenses.ExpenseRouter
+	routes     []routes
+}
+
+type routes interface {
+	RegisterRoutes(mux chi.Router)
 }
 
 func NewRouter(
-	handlers *handlers,
+	routes []routes,
 	errHandler errorHandler,
 	m mw,
-	idemMw idemMw,
 ) *Router {
-	expensesRouter := expenses.NewRouter(handlers.expenses, m, idemMw)
 	return &Router{
 		m:          m,
 		errHandler: errHandler,
-		expenses:   expensesRouter,
+		routes:     routes,
 	}
 }
 
@@ -82,9 +78,11 @@ func (router *Router) RegisterRoutes(db *sql.DB) *chi.Mux {
 	r.Route("/v1", func(r chi.Router) {
 		r.Use(router.m.RateLimit)
 		r.Use(router.m.EnableCORS)
-		r.Use(router.m.Authenticate)
+		// r.Use(router.m.Authenticate)
 
-		router.expenses.Register(r)
+		for _, route := range router.routes {
+			route.RegisterRoutes(r)
+		}
 	})
 
 	return r

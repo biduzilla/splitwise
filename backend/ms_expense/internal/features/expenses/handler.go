@@ -14,8 +14,8 @@ import (
 	"go.opentelemetry.io/otel/codes"
 )
 
-type ExpenseHandler struct {
-	service    service
+type expenseHandler struct {
+	service    Service
 	errHandler errHandler
 	safeSort   []string
 }
@@ -28,11 +28,11 @@ type errHandler interface {
 	)
 }
 
-func NewHandler(
-	s service,
+func newHandler(
+	s Service,
 	errHandler errHandler,
-) *ExpenseHandler {
-	return &ExpenseHandler{
+) *expenseHandler {
+	return &expenseHandler{
 		service:    s,
 		errHandler: errHandler,
 		safeSort: []string{"id", "-id", "amount", "-amount",
@@ -49,9 +49,9 @@ type handler interface {
 	Delete(w http.ResponseWriter, r *http.Request)
 }
 
-func (h *ExpenseHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *expenseHandler) Create(w http.ResponseWriter, r *http.Request) {
 	tracer := otel.Tracer("ms_expense/internal/features/expense")
-	ctx, span := tracer.Start(r.Context(), "ExpenseHandler.Create")
+	ctx, span := tracer.Start(r.Context(), "expenseHandler.Create")
 	defer span.End()
 
 	var in CreateExpenseDTO
@@ -81,9 +81,9 @@ func (h *ExpenseHandler) Create(w http.ResponseWriter, r *http.Request) {
 	httputils.Respond(w, r, http.StatusCreated, model.ToDTO(), nil, h.errHandler)
 }
 
-func (h *ExpenseHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (h *expenseHandler) Get(w http.ResponseWriter, r *http.Request) {
 	tracer := otel.Tracer("ms_expense/internal/features/expense")
-	ctx, span := tracer.Start(r.Context(), "ExpenseHandler.Get")
+	ctx, span := tracer.Start(r.Context(), "expenseHandler.Get")
 	defer span.End()
 
 	id, ok := httputils.ParseUUID(w, r, h.errHandler)
@@ -106,9 +106,9 @@ func (h *ExpenseHandler) Get(w http.ResponseWriter, r *http.Request) {
 	httputils.Respond(w, r, http.StatusOK, model.ToDTO(), nil, h.errHandler)
 }
 
-func (h *ExpenseHandler) List(w http.ResponseWriter, r *http.Request) {
+func (h *expenseHandler) List(w http.ResponseWriter, r *http.Request) {
 	tracer := otel.Tracer("ms_expense/internal/features/expense")
-	ctx, span := tracer.Start(r.Context(), "ExpenseHandler.List")
+	ctx, span := tracer.Start(r.Context(), "expenseHandler.List")
 	defer span.End()
 
 	groupID, err := httputils.PathParamUUID(r, "group_id")
@@ -153,9 +153,9 @@ func (h *ExpenseHandler) List(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-func (h *ExpenseHandler) Update(w http.ResponseWriter, r *http.Request) {
+func (h *expenseHandler) Update(w http.ResponseWriter, r *http.Request) {
 	tracer := otel.Tracer("ms_expense/internal/features/expense")
-	ctx, span := tracer.Start(r.Context(), "ExpenseHandler.Update")
+	ctx, span := tracer.Start(r.Context(), "expenseHandler.Update")
 	defer span.End()
 
 	id, ok := httputils.ParseUUID(w, r, h.errHandler)
@@ -190,9 +190,9 @@ func (h *ExpenseHandler) Update(w http.ResponseWriter, r *http.Request) {
 	httputils.Respond(w, r, http.StatusOK, model.ToDTO(), nil, nil)
 }
 
-func (h *ExpenseHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (h *expenseHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	tracer := otel.Tracer("ms_expense/internal/features/expense")
-	ctx, span := tracer.Start(r.Context(), "ExpenseHandler.Delete")
+	ctx, span := tracer.Start(r.Context(), "expenseHandler.Delete")
 	defer span.End()
 
 	id, ok := httputils.ParseUUID(w, r, h.errHandler)
@@ -213,7 +213,7 @@ func (h *ExpenseHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *ExpenseHandler) getFindAllParams(r *http.Request) (*time.Time, *time.Time, filters.Filters, error) {
+func (h *expenseHandler) getFindAllParams(r *http.Request) (*time.Time, *time.Time, filters.Filters, error) {
 	v := validator.New()
 	startDate := httputils.ReadDateParam(r, "start_date", v)
 	endDate := httputils.ReadDateParam(r, "end_date", v)

@@ -33,19 +33,19 @@ type repository interface {
 	SoftDelete(ctx context.Context, id uuid.UUID) error
 }
 
-type ExpenseRepository struct {
+type expenseRepository struct {
 	db     *sql.DB
 	logger *slog.Logger
 }
 
-func NewRepository(db *sql.DB, logger *slog.Logger) *ExpenseRepository {
-	return &ExpenseRepository{
+func newRepository(db *sql.DB, logger *slog.Logger) *expenseRepository {
+	return &expenseRepository{
 		db:     db,
 		logger: logger.WithGroup("db"),
 	}
 }
 
-func (r *ExpenseRepository) Insert(ctx context.Context, m *Expense) error {
+func (r *expenseRepository) Insert(ctx context.Context, m *Expense) error {
 	q := `
         INSERT INTO expenses(
 			group_id, 
@@ -72,7 +72,7 @@ func (r *ExpenseRepository) Insert(ctx context.Context, m *Expense) error {
 	return row.Scan(&m.ID, &m.Version, &m.CreatedAt)
 }
 
-func (r *ExpenseRepository) InsertShares(
+func (r *expenseRepository) InsertShares(
 	ctx context.Context,
 	expenseID uuid.UUID,
 	shares []Share,
@@ -107,7 +107,7 @@ func (r *ExpenseRepository) InsertShares(
 	return err
 }
 
-func (r *ExpenseRepository) FindByID(
+func (r *expenseRepository) FindByID(
 	ctx context.Context,
 	id uuid.UUID,
 ) (*Expense, error) {
@@ -164,7 +164,7 @@ func (r *ExpenseRepository) FindByID(
 	return &e, nil
 }
 
-func (r *ExpenseRepository) loadShares(
+func (r *expenseRepository) loadShares(
 	ctx context.Context,
 	expenseID uuid.UUID,
 ) ([]Share, error) {
@@ -193,7 +193,7 @@ func (r *ExpenseRepository) loadShares(
 	return out, rows.Err()
 }
 
-func (r *ExpenseRepository) FindByGroupID(
+func (r *expenseRepository) FindByGroupID(
 	ctx context.Context,
 	groupID uuid.UUID,
 	startDate, endDate *time.Time,
@@ -262,7 +262,7 @@ func (r *ExpenseRepository) FindByGroupID(
 	return out, metadata, rows.Err()
 }
 
-func (r *ExpenseRepository) Update(
+func (r *expenseRepository) Update(
 	ctx context.Context,
 	e *Expense,
 ) error {
@@ -313,7 +313,7 @@ func (r *ExpenseRepository) Update(
 	return nil
 }
 
-func (r *ExpenseRepository) ReplaceShares(
+func (r *expenseRepository) ReplaceShares(
 	ctx context.Context,
 	expenseID uuid.UUID,
 	shares []Share,
@@ -325,7 +325,7 @@ func (r *ExpenseRepository) ReplaceShares(
 	return r.InsertShares(ctx, expenseID, shares)
 }
 
-func (r *ExpenseRepository) SoftDelete(
+func (r *expenseRepository) SoftDelete(
 	ctx context.Context,
 	id uuid.UUID,
 ) error {

@@ -6,18 +6,18 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type ExpenseRouter struct {
+type expenseRouter struct {
 	handler handler
 	authMw  authMiddleware
 	idemMw  idemMw
 }
 
-func NewRouter(
+func newRouter(
 	handler handler,
 	authMw authMiddleware,
 	idemMw idemMw,
-) *ExpenseRouter {
-	return &ExpenseRouter{
+) *expenseRouter {
+	return &expenseRouter{
 		handler: handler,
 		authMw:  authMw,
 		idemMw:  idemMw,
@@ -32,8 +32,8 @@ type authMiddleware interface {
 	RequireActivatedUser(next http.Handler) http.Handler
 }
 
-func (r *ExpenseRouter) Register(mux chi.Router) {
-	mux.Route("/v1/expenses", func(rt chi.Router) {
+func (r *expenseRouter) Register(mux chi.Router) {
+	mux.Route("/expenses", func(rt chi.Router) {
 		rt.Use(r.authMw.RequireActivatedUser)
 
 		rt.Get("/", r.handler.List)
