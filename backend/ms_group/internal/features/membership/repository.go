@@ -11,13 +11,13 @@ import (
 	"uuid"
 )
 
-type MembershipRepository struct {
+type membershipRepository struct {
 	db     *sql.DB
 	logger *slog.Logger
 }
 
-func NewRepository(db *sql.DB, logger *slog.Logger) *MembershipRepository {
-	return &MembershipRepository{db: db, logger: logger.WithGroup("db")}
+func newRepository(db *sql.DB, logger *slog.Logger) *membershipRepository {
+	return &membershipRepository{db: db, logger: logger.WithGroup("db")}
 }
 
 type repository interface {
@@ -28,7 +28,7 @@ type repository interface {
 	CountActiveMembers(ctx context.Context, groupID uuid.UUID) (int, error)
 }
 
-func (r *MembershipRepository) Insert(
+func (r *membershipRepository) Insert(
 	ctx context.Context,
 	m *Membership,
 ) error {
@@ -60,7 +60,7 @@ func (r *MembershipRepository) Insert(
 		Scan(&m.ID, &m.Version, &m.CreatedAt)
 }
 
-func (r *MembershipRepository) FindByGroupID(
+func (r *membershipRepository) FindByGroupID(
 	ctx context.Context,
 	groupID uuid.UUID,
 ) ([]*Membership, error) {
@@ -112,7 +112,7 @@ func (r *MembershipRepository) FindByGroupID(
 	return members, rows.Err()
 }
 
-func (r *MembershipRepository) FindByGroupIDAndUserID(
+func (r *membershipRepository) FindByGroupIDAndUserID(
 	ctx context.Context,
 	groupID, userID uuid.UUID,
 ) (*Membership, error) {
@@ -160,7 +160,7 @@ func (r *MembershipRepository) FindByGroupIDAndUserID(
 	return &m, nil
 }
 
-func (r *MembershipRepository) Remove(
+func (r *membershipRepository) Remove(
 	ctx context.Context,
 	groupID, userID uuid.UUID,
 ) error {
@@ -195,7 +195,7 @@ func (r *MembershipRepository) Remove(
 	return nil
 }
 
-func (r *MembershipRepository) CountActiveMembers(ctx context.Context, groupID uuid.UUID) (int, error) {
+func (r *membershipRepository) CountActiveMembers(ctx context.Context, groupID uuid.UUID) (int, error) {
 	var n int
 	q := `SELECT 
 			count(*) 

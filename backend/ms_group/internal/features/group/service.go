@@ -12,10 +12,11 @@ import (
 	"shared/cache"
 	"shared/filters"
 	"shared/validator"
+	"time"
 	"uuid"
 )
 
-type GroupService struct {
+type groupService struct {
 	repo              repository
 	cache             cache.Cache
 	we                WriteExecutor
@@ -41,7 +42,7 @@ type producer interface {
 	Publish(ctx context.Context, topic messaging.Topic, event messaging.Event) error
 }
 
-func NewService(
+func newService(
 	repo repository,
 	cache cache.Cache,
 	we WriteExecutor,
@@ -49,8 +50,8 @@ func NewService(
 	producer producer,
 	logger *slog.Logger,
 	membershipService membershipService,
-) *GroupService {
-	return &GroupService{
+) *groupService {
+	return &groupService{
 		repo:              repo,
 		cache:             cache,
 		we:                we,
@@ -70,7 +71,7 @@ type service interface {
 	FindOwnerID(ctx context.Context, groupID uuid.UUID) (uuid.UUID, error)
 }
 
-func (s *GroupService) FindByID(
+func (s *groupService) FindByID(
 	ctx context.Context,
 	id uuid.UUID,
 ) (*GroupDetail, error) {
@@ -94,7 +95,7 @@ func (s *GroupService) FindByID(
 
 }
 
-func (s *GroupService) ListByUser(
+func (s *groupService) ListByUser(
 	ctx context.Context,
 	f filters.Filters,
 ) ([]*Group, filters.Metadata, error) {
@@ -123,7 +124,7 @@ func (s *GroupService) ListByUser(
 	return payload.Groups, payload.Metadata, nil
 }
 
-func (s *GroupService) Create(
+func (s *groupService) Create(
 	ctx context.Context,
 	dto CreateGroupDTO,
 ) (*Group, error) {
@@ -156,24 +157,24 @@ func (s *GroupService) Create(
 		return nil, err
 	}
 
-	// event := GroupCreated{
-	// 	EventID:    uuid.New(),
-	// 	EventType:  messaging.EventTypeGroupCreated,
-	// 	GroupID:    g.ID,
-	// 	Name:       g.Name,
-	// 	OwnerID:    g.OwnerID,
-	// 	Currency:   g.Currency,
-	// 	OccurredAt: time.Now().UTC(),
-	// }
+	event := GroupCreated{
+		EventID:    uuid.New(),
+		EventType:  messaging.EventTypeGroupCreated,
+		GroupID:    g.ID,
+		Name:       g.Name,
+		OwnerID:    g.OwnerID,
+		Currency:   g.Currency,
+		OccurredAt: time.Now().UTC(),
+	}
 
-	// if err := s.producer.Publish(ctx, messaging.RateioEvents, event); err != nil {
-	// 	s.logger.Error("failed to publish group.created",
-	// 		"group_id", g.ID, "error", err)
-	// }
+	if err := s.producer.Publish(ctx, messaging.RateioEvents, event); err != nil {
+		s.logger.Error("failed to publish group.created",
+			"group_id", g.ID, "error", err)
+	}
 	return g, nil
 }
 
-func (s *GroupService) Delete(ctx context.Context, id uuid.UUID) error {
+func (s *groupService) Delete(ctx context.Context, id uuid.UUID) error {
 	userID := contexts.GetUser(ctx).GetID()
 	g, err := s.repo.FindByID(ctx, id)
 	if err != nil {
@@ -189,7 +190,7 @@ func (s *GroupService) Delete(ctx context.Context, id uuid.UUID) error {
 	})
 }
 
-func (s *GroupService) IsMember(ctx context.Context, groupID, userID uuid.UUID) (bool, error) {
+func (s *groupService) IsMember(ctx context.Context, groupID, userID uuid.UUID) (bool, error) {
 	_, err := s.membershipService.FindByGroupIDAndUserID(ctx, groupID, userID)
 	if err != nil {
 		if errors.Is(err, apierror.ErrRecordNotFound) {
@@ -200,7 +201,7 @@ func (s *GroupService) IsMember(ctx context.Context, groupID, userID uuid.UUID) 
 	return true, nil
 }
 
-func (s *GroupService) FindOwnerID(ctx context.Context, groupID uuid.UUID) (uuid.UUID, error) {
+func (s *groupService) FindOwnerID(ctx context.Context, groupID uuid.UUID) (uuid.UUID, error) {
 	g, err := s.repo.FindByID(ctx, groupID)
 	if err != nil {
 		return uuid.Nil(), err

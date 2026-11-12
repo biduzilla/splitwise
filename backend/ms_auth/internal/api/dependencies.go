@@ -16,7 +16,6 @@ func (app *application) buildDependencies(shutdown chan struct{}) (*dependencies
 	tx := transaction.NewManager(app.db)
 	cacheClient, err := cache.NewRedisCache(app.config.Base.Cache.Addr,
 		app.config.Base.Cache.Password, app.config.Base.Cache.Db, nil)
-
 	if err != nil {
 		return nil, err
 	}

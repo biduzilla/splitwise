@@ -18,7 +18,7 @@ type errHandler interface {
 	)
 }
 
-type MembershipHandler struct {
+type membershipHandler struct {
 	svc        service
 	errHandler errHandler
 }
@@ -27,14 +27,14 @@ type handler interface {
 	Remove(w http.ResponseWriter, r *http.Request)
 }
 
-func NewHandler(svc service, errHandler errHandler) *MembershipHandler {
-	return &MembershipHandler{svc: svc, errHandler: errHandler}
+func newHandler(svc service, errHandler errHandler) *membershipHandler {
+	return &membershipHandler{svc: svc, errHandler: errHandler}
 }
 
 // DELETE /v1/groups/{id}/members/{userId}
-func (h *MembershipHandler) Remove(w http.ResponseWriter, r *http.Request) {
+func (h *membershipHandler) Remove(w http.ResponseWriter, r *http.Request) {
 	tracer := otel.Tracer("ms_group/internal/features/membership")
-	ctx, span := tracer.Start(r.Context(), "MembershipHandler.Remove")
+	ctx, span := tracer.Start(r.Context(), "membershipHandler.Remove")
 	defer span.End()
 
 	groupID, err := httputils.PathParamUUID(r, "id")

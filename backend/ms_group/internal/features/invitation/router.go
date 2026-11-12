@@ -10,26 +10,26 @@ type authMiddleware interface {
 	RequireActivatedUser(next http.Handler) http.Handler
 }
 
-type InvitationRouter struct {
+type invitationRouter struct {
 	handler        handler
 	authMiddleware authMiddleware
 }
 
-func NewRouter(
+func newRouter(
 	handler handler,
 	authMiddleware authMiddleware,
-) *InvitationRouter {
-	return &InvitationRouter{
+) *invitationRouter {
+	return &invitationRouter{
 		handler:        handler,
 		authMiddleware: authMiddleware,
 	}
 }
 
-func (r *InvitationRouter) MountInGroup(router chi.Router) {
+func (r *invitationRouter) MountInGroup(router chi.Router) {
 	router.Post("/invitations", r.handler.Create)
 }
 
-func (r *InvitationRouter) Routes(router chi.Router) {
+func (r *invitationRouter) Register(router chi.Router) {
 	router.Route("/invitations", func(router chi.Router) {
 		router.Use(r.authMiddleware.RequireActivatedUser)
 		router.Post("/{token}/accept", r.handler.Accept)

@@ -16,7 +16,7 @@ import (
 
 const maxGroupMembers = 10
 
-type InvitationService struct {
+type invitationService struct {
 	repo              repository
 	cache             cache.Cache
 	we                WriteExecutor
@@ -40,7 +40,7 @@ type tokenService interface {
 	Generate(
 		groupID, inviterID, jti uuid.UUID,
 	) (string, time.Time, error)
-	Validate(raw string) (*Claims, error)
+	Validate(raw string) (*claims, error)
 }
 
 type membershipService interface {
@@ -49,7 +49,7 @@ type membershipService interface {
 	CountActiveMembers(ctx context.Context, groupID uuid.UUID) (int, error)
 }
 
-func NewService(
+func newService(
 	repo repository,
 	cache cache.Cache,
 	we WriteExecutor,
@@ -59,8 +59,8 @@ func NewService(
 	membershipService membershipService,
 	tokenService tokenService,
 	inviteURLBase string,
-) *InvitationService {
-	return &InvitationService{
+) *invitationService {
+	return &invitationService{
 		repo:              repo,
 		cache:             cache,
 		we:                we,
@@ -81,7 +81,7 @@ type service interface {
 	) (*membership.Membership, error)
 }
 
-func (s *InvitationService) Create(
+func (s *invitationService) Create(
 	ctx context.Context,
 	groupID uuid.UUID,
 ) (*InvitationDTO, error) {
@@ -135,7 +135,7 @@ func (s *InvitationService) Create(
 	}, nil
 }
 
-func (s *InvitationService) Accept(
+func (s *invitationService) Accept(
 	ctx context.Context,
 	raw string,
 ) (*membership.Membership, error) {
@@ -192,24 +192,24 @@ func (s *InvitationService) Accept(
 		return s.repo.MarkUsed(ctx, inv.ID, userID)
 	})
 
-	// event := GroupMemberAdded{
-	// 	EventID:      uuid.New(),
-	// 	EventType:    messaging.EventTypeGroupMemberAdded.String(),
-	// 	GroupID:      m.GroupID,
-	// 	MembershipID: m.ID,
-	// 	UserID:       m.UserID,
-	// 	Role:         string(m.Role),
-	// 	InviterID:    claims.InviterID,
-	// 	OccurredAt:   time.Now().UTC(),
-	// }
+	event := GroupMemberAdded{
+		EventID:      uuid.New(),
+		EventType:    messaging.EventTypeGroupMemberAdded.String(),
+		GroupID:      m.GroupID,
+		MembershipID: m.ID,
+		UserID:       m.UserID,
+		Role:         string(m.Role),
+		InviterID:    claims.InviterID,
+		OccurredAt:   time.Now().UTC(),
+	}
 
-	// if err := s.producer.Publish(ctx, messaging.RateioEvents, event); err != nil {
-	// 	s.logger.Error("failed to publish group.member_added",
-	// 		"group_id", m.GroupID,
-	// 		"user_id", m.UserID,
-	// 		"error", err,
-	// 	)
-	// }
+	if err := s.producer.Publish(ctx, messaging.RateioEvents, event); err != nil {
+		s.logger.Error("failed to publish group.member_added",
+			"group_id", m.GroupID,
+			"user_id", m.UserID,
+			"error", err,
+		)
+	}
 
 	return m, err
 }

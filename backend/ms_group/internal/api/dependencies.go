@@ -3,55 +3,69 @@ package api
 import (
 	m "ms_group/internal/core/middleware"
 	"shared/apierror"
+	"shared/auth/security"
+	"shared/cache"
 	"shared/obs/middleware"
 	"shared/transaction"
 )
 
 type dependencies struct {
-	repo         *repositories
-	tx           transaction.Manager
-	services     *services
-	errorHandler *apierror.ErrorHandler
-	handlers     *handlers
-	mw           *middleware.Middleware
-	routers      *Router
+	routers *Router
 }
 
 func (app *application) buildDependencies(shutdown chan struct{}) (*dependencies, error) {
-	repo := NewRepositories(app.db, app.Logger)
-	tx := transaction.NewManager(app.db)
-	clients := NewClients(app.config)
-	services, err := NewServices(repo, tx, app.config, app.Logger, app.kafkaProducer, clients)
+	cacheClient, err := cache.NewRedisCache(app.config.Base.Cache.Addr,
+		app.config.Base.Cache.Password, app.config.Base.Cache.Db, nil)
+
 	if err != nil {
 		return nil, err
 	}
 
+	app.Logger.Info("reddis connection pool established")
+
+	jwtService, err := security.NewService(app.config.Base)
+	if err != nil {
+		return nil, err
+	}
+	tx := transaction.NewManager(app.db)
+	clients := NewClients(app.config)
 	errHandler := apierror.NewErrorHandler(app.Logger)
-	handlers := NewHandlers(services, errHandler)
-	middleware := middleware.New(
+	mw := middleware.New(
 		errHandler,
 		app.config.Base,
-		services.jwtService,
+		jwtService,
 		app.Logger,
 		shutdown,
 	)
 
-	customMiddleware := m.New(errHandler, services.group)
+	customMiddleware := m.New(errHandler, nil)
+
+	modules, err := NewModule(
+		app.db,
+		app.Logger,
+		cacheClient,
+		tx,
+		app.kafkaProducer,
+		errHandler,
+		*clients,
+		mw,
+		app.config,
+		customMiddleware,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	customMiddleware.SetGroupService(modules.group.Service)
 
 	router := NewRouter(
-		handlers,
 		errHandler,
-		middleware,
-		customMiddleware,
+		mw,
+		modules.group,
+		modules.invitation,
 	)
 
 	return &dependencies{
-		repo:         repo,
-		tx:           tx,
-		services:     services,
-		errorHandler: errHandler,
-		handlers:     handlers,
-		mw:           middleware,
-		routers:      router,
+		routers: router,
 	}, nil
 }

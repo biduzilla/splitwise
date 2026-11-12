@@ -10,6 +10,7 @@ import (
 	"shared/auth/contexts"
 	"shared/cache"
 	"shared/filters"
+	"time"
 	"uuid"
 )
 
@@ -17,13 +18,13 @@ type groupFinder interface {
 	FindOwnerID(ctx context.Context, groupID uuid.UUID) (uuid.UUID, error)
 }
 
-type WriteExecutor interface {
+type writeExecutor interface {
 	Execute(ctx context.Context, fn func(ctx context.Context) error) error
 }
-type MembershipService struct {
+type membershipService struct {
 	repo        repository
 	cache       cache.Cache
-	we          WriteExecutor
+	we          writeExecutor
 	kb          cache.KeyBuilder
 	producer    producer
 	groupFinder groupFinder
@@ -48,17 +49,17 @@ type userClient interface {
 	) (user.UserDTO, error)
 }
 
-func NewService(
+func newService(
 	repo repository,
 	cache cache.Cache,
-	we WriteExecutor,
+	we writeExecutor,
 	kb cache.KeyBuilder,
 	producer producer,
 	logger *slog.Logger,
 	groupFinder groupFinder,
 	userClient userClient,
-) *MembershipService {
-	return &MembershipService{
+) *membershipService {
+	return &membershipService{
 		repo:        repo,
 		cache:       cache,
 		we:          we,
@@ -78,7 +79,7 @@ type service interface {
 	CountActiveMembers(ctx context.Context, groupID uuid.UUID) (int, error)
 }
 
-func (s *MembershipService) FindByGroupID(ctx context.Context, groupID uuid.UUID) ([]*Membership, error) {
+func (s *membershipService) FindByGroupID(ctx context.Context, groupID uuid.UUID) ([]*Membership, error) {
 	key := s.kb.BuildItemKey(groupID.String())
 	members, err := cache.FetchOrCache(ctx, s.cache, key, func() ([]*Membership, error) {
 		return s.repo.FindByGroupID(ctx, groupID)
@@ -113,7 +114,7 @@ func (s *MembershipService) FindByGroupID(ctx context.Context, groupID uuid.UUID
 	return members, nil
 }
 
-func (s *MembershipService) FindByGroupIDAndUserID(ctx context.Context, groupID, userID uuid.UUID) (*Membership, error) {
+func (s *membershipService) FindByGroupIDAndUserID(ctx context.Context, groupID, userID uuid.UUID) (*Membership, error) {
 	key := s.kb.BuildListKey(
 		cache.UUID(groupID),
 		cache.UUID(userID),
@@ -137,17 +138,17 @@ func (s *MembershipService) FindByGroupIDAndUserID(ctx context.Context, groupID,
 	return m, nil
 }
 
-func (s *MembershipService) CountActiveMembers(ctx context.Context, groupID uuid.UUID) (int, error) {
+func (s *membershipService) CountActiveMembers(ctx context.Context, groupID uuid.UUID) (int, error) {
 	return s.repo.CountActiveMembers(ctx, groupID)
 }
 
-func (s *MembershipService) Insert(ctx context.Context, m *Membership) error {
+func (s *membershipService) Insert(ctx context.Context, m *Membership) error {
 	return s.we.Execute(ctx, func(ctx context.Context) error {
 		return s.repo.Insert(ctx, m)
 	})
 }
 
-func (s *MembershipService) Remove(ctx context.Context, groupID, userID uuid.UUID) error {
+func (s *membershipService) Remove(ctx context.Context, groupID, userID uuid.UUID) error {
 	actorID := contexts.GetUser(ctx).GetID()
 
 	ownerID, err := s.groupFinder.FindOwnerID(ctx, groupID)
@@ -163,13 +164,13 @@ func (s *MembershipService) Remove(ctx context.Context, groupID, userID uuid.UUI
 		})
 	}
 
-	// var member *Membership
+	var member *Membership
 	err = s.we.Execute(ctx, func(ctx context.Context) error {
-		// m, err := s.repo.FindByGroupIDAndUserID(ctx, groupID, userID)
-		// if err != nil {
-		// 	return err
-		// }
-		// member = m
+		m, err := s.repo.FindByGroupIDAndUserID(ctx, groupID, userID)
+		if err != nil {
+			return err
+		}
+		member = m
 		return s.repo.Remove(ctx, groupID, userID)
 	})
 
@@ -177,28 +178,28 @@ func (s *MembershipService) Remove(ctx context.Context, groupID, userID uuid.UUI
 		return err
 	}
 
-	// event := GroupMemberRemoved{
-	// 	EventID:      uuid.New(),
-	// 	EventType:    messaging.EventTypeGroupMemberRemoved.String(),
-	// 	GroupID:      groupID,
-	// 	MembershipID: member.ID,
-	// 	UserID:       userID,
-	// 	RemovedBy:    actorID,
-	// 	OccurredAt:   time.Now().UTC(),
-	// }
+	event := GroupMemberRemoved{
+		EventID:      uuid.New(),
+		EventType:    messaging.EventTypeGroupMemberRemoved.String(),
+		GroupID:      groupID,
+		MembershipID: member.ID,
+		UserID:       userID,
+		RemovedBy:    actorID,
+		OccurredAt:   time.Now().UTC(),
+	}
 
-	// if err := s.producer.Publish(ctx, messaging.RateioEvents, event); err != nil {
-	// 	s.logger.Error("failed to publish group.member_removed",
-	// 		"group_id", groupID,
-	// 		"user_id", userID,
-	// 		"error", err,
-	// 	)
-	// }
+	if err := s.producer.Publish(ctx, messaging.RateioEvents, event); err != nil {
+		s.logger.Error("failed to publish group.member_removed",
+			"group_id", groupID,
+			"user_id", userID,
+			"error", err,
+		)
+	}
 
 	return nil
 }
 
-func (s *MembershipService) SetGroupFinder(gf groupFinder) {
+func (s *membershipService) SetGroupFinder(gf groupFinder) {
 	s.groupFinder = gf
 }
 

@@ -16,7 +16,7 @@ const (
 	ttl      = 72 * time.Hour
 )
 
-type Claims struct {
+type claims struct {
 	GroupID   uuid.UUID `json:"group_id"`
 	InviterID uuid.UUID `json:"inviter_id"`
 	jwt.RegisteredClaims
@@ -27,7 +27,7 @@ type TokenService struct {
 	publicKey  *rsa.PublicKey
 }
 
-func NewTokenService(
+func newTokenService(
 	privPath, pubPath string,
 ) (*TokenService, error) {
 	priv, err := security.LoadPrivateKey(privPath)
@@ -46,7 +46,7 @@ func (s *TokenService) Generate(
 	groupID, inviterID, jti uuid.UUID,
 ) (string, time.Time, error) {
 	exp := time.Now().Add(ttl)
-	claims := Claims{
+	claims := claims{
 		GroupID:   groupID,
 		InviterID: inviterID,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -62,8 +62,8 @@ func (s *TokenService) Generate(
 	return signed, exp, err
 }
 
-func (s *TokenService) Validate(raw string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(raw, &Claims{}, func(t *jwt.Token) (any, error) {
+func (s *TokenService) Validate(raw string) (*claims, error) {
+	token, err := jwt.ParseWithClaims(raw, &claims{}, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, errors.New("unexpected signing method")
 		}
@@ -77,7 +77,7 @@ func (s *TokenService) Validate(raw string) (*Claims, error) {
 		return nil, err
 	}
 
-	claims, ok := token.Claims.(*Claims)
+	claims, ok := token.Claims.(*claims)
 	if !ok || !token.Valid {
 		return nil, errors.New("invalid invitation token")
 	}

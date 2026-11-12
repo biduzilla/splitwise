@@ -12,13 +12,13 @@ import (
 	"uuid"
 )
 
-type GroupRepository struct {
+type groupRepository struct {
 	db     *sql.DB
 	logger *slog.Logger
 }
 
-func NewRepository(db *sql.DB, logger *slog.Logger) *GroupRepository {
-	return &GroupRepository{db: db, logger: logger.WithGroup("db")}
+func newRepository(db *sql.DB, logger *slog.Logger) *groupRepository {
+	return &groupRepository{db: db, logger: logger.WithGroup("db")}
 }
 
 type repository interface {
@@ -28,7 +28,7 @@ type repository interface {
 	SoftDelete(ctx context.Context, id uuid.UUID) error
 }
 
-func (r *GroupRepository) Insert(
+func (r *groupRepository) Insert(
 	ctx context.Context,
 	g *Group,
 ) error {
@@ -59,7 +59,7 @@ func (r *GroupRepository) Insert(
 		Scan(&g.ID, &g.Version, &g.CreatedAt, &g.Currency)
 }
 
-func (r *GroupRepository) FindByID(
+func (r *groupRepository) FindByID(
 	ctx context.Context,
 	id uuid.UUID,
 ) (*Group, error) {
@@ -101,7 +101,7 @@ func (r *GroupRepository) FindByID(
 	return &g, err
 }
 
-func (r *GroupRepository) FindAllByUser(
+func (r *groupRepository) FindAllByUser(
 	ctx context.Context, f filters.Filters,
 ) ([]*Group, filters.Metadata, error) {
 	userAuth := contexts.GetUser(ctx)
@@ -164,7 +164,7 @@ func (r *GroupRepository) FindAllByUser(
 	return groups, meta, nil
 }
 
-func (r *GroupRepository) SoftDelete(ctx context.Context, id uuid.UUID) error {
+func (r *groupRepository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	userAuth := contexts.GetUser(ctx)
 
 	query := `

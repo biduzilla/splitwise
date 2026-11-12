@@ -11,13 +11,13 @@ import (
 	"uuid"
 )
 
-type InvitationRepository struct {
+type invitationRepository struct {
 	db     *sql.DB
 	logger *slog.Logger
 }
 
-func NewRepository(db *sql.DB, logger *slog.Logger) *InvitationRepository {
-	return &InvitationRepository{db: db, logger: logger.WithGroup("db")}
+func newRepository(db *sql.DB, logger *slog.Logger) *invitationRepository {
+	return &invitationRepository{db: db, logger: logger.WithGroup("db")}
 }
 
 type repository interface {
@@ -26,7 +26,7 @@ type repository interface {
 	MarkUsed(ctx context.Context, id, userID uuid.UUID) error
 }
 
-func (r *InvitationRepository) Insert(ctx context.Context, inv *Invitation) error {
+func (r *invitationRepository) Insert(ctx context.Context, inv *Invitation) error {
 	userAuth := contexts.GetUser(ctx)
 
 	query := `
@@ -62,7 +62,7 @@ func (r *InvitationRepository) Insert(ctx context.Context, inv *Invitation) erro
 	return tx.QueryRowContext(ctx, query, args...).Scan(&inv.ID, &inv.Version, &inv.CreatedAt)
 }
 
-func (r *InvitationRepository) FindByJTI(ctx context.Context, jti uuid.UUID) (*Invitation, error) {
+func (r *invitationRepository) FindByJTI(ctx context.Context, jti uuid.UUID) (*Invitation, error) {
 	query := `
         SELECT 
 			id, 
@@ -109,7 +109,7 @@ func (r *InvitationRepository) FindByJTI(ctx context.Context, jti uuid.UUID) (*I
 	return &inv, nil
 }
 
-func (r *InvitationRepository) MarkUsed(ctx context.Context, id, userID uuid.UUID) error {
+func (r *invitationRepository) MarkUsed(ctx context.Context, id, userID uuid.UUID) error {
 	query := `
         UPDATE invitations
         SET 

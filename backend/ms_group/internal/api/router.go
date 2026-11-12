@@ -4,9 +4,6 @@ import (
 	"database/sql"
 	"expvar"
 	"fmt"
-	"ms_group/internal/features/group"
-	"ms_group/internal/features/invitation"
-	"ms_group/internal/features/membership"
 	"net/http"
 	"shared/apierror"
 	"shared/obs/metrics"
@@ -35,33 +32,25 @@ type errorHandler interface {
 	HandlerError(w http.ResponseWriter, r *http.Request, err error)
 }
 
+type routes interface {
+	RegisterRoutes(mux chi.Router)
+}
+
 type Router struct {
-	errHandler       errorHandler
-	m                mw
-	group            *group.GroupRouter
-	invitation       *invitation.InvitationRouter
-	customMiddleware customMiddleware
+	errHandler errorHandler
+	m          mw
+	routes     []routes
 }
 
 func NewRouter(
-	handlers *handlers,
 	errHandler errorHandler,
 	m mw,
-	customMiddleware customMiddleware,
+	routes ...routes,
 ) *Router {
-	membershipRouter := membership.NewRouter(handlers.membership)
-	invitationRouter := invitation.NewRouter(handlers.invitation, m)
 	return &Router{
 		m:          m,
 		errHandler: errHandler,
-		group: group.NewRouter(
-			handlers.group,
-			m,
-			customMiddleware,
-			membershipRouter,
-			invitationRouter,
-		),
-		invitation: invitationRouter,
+		routes:     routes,
 	}
 }
 
@@ -96,8 +85,9 @@ func (router *Router) RegisterRoutes(db *sql.DB) *chi.Mux {
 		r.Use(router.m.EnableCORS)
 		r.Use(router.m.Authenticate)
 
-		router.group.Routes(r)
-		router.invitation.Routes(r)
+		for _, route := range router.routes {
+			route.RegisterRoutes(r)
+		}
 	})
 
 	return r

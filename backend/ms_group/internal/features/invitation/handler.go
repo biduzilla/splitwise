@@ -10,7 +10,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 )
 
-type InvitationHandler struct {
+type invitationHandler struct {
 	svc        service
 	errHandler errHandler
 }
@@ -23,8 +23,8 @@ type errHandler interface {
 	)
 }
 
-func NewHandler(svc service, errHandler errHandler) *InvitationHandler {
-	return &InvitationHandler{svc: svc, errHandler: errHandler}
+func newHandler(svc service, errHandler errHandler) *invitationHandler {
+	return &invitationHandler{svc: svc, errHandler: errHandler}
 }
 
 type handler interface {
@@ -33,9 +33,9 @@ type handler interface {
 }
 
 // POST /v1/groups/{id}/invitations
-func (h *InvitationHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *invitationHandler) Create(w http.ResponseWriter, r *http.Request) {
 	tracer := otel.Tracer("ms_group/internal/features/invitation")
-	ctx, span := tracer.Start(r.Context(), "InvitationHandler.Create")
+	ctx, span := tracer.Start(r.Context(), "invitationHandler.Create")
 	defer span.End()
 
 	groupID, err := httputils.PathParamUUID(r, "id")
@@ -61,9 +61,9 @@ func (h *InvitationHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // POST /v1/invitations/{token}/accept
-func (h *InvitationHandler) Accept(w http.ResponseWriter, r *http.Request) {
+func (h *invitationHandler) Accept(w http.ResponseWriter, r *http.Request) {
 	tracer := otel.Tracer("ms_group/internal/features/invitation")
-	ctx, span := tracer.Start(r.Context(), "InvitationHandler.Accept")
+	ctx, span := tracer.Start(r.Context(), "invitationHandler.Accept")
 	defer span.End()
 
 	token, err := httputils.PathParamString(r, "token")

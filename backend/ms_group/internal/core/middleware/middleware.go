@@ -37,6 +37,10 @@ func New(
 	}
 }
 
+func (m *Middleware) SetGroupService(groupService groupService) {
+	m.groupService = groupService
+}
+
 func (m *Middleware) RequireGroupMember(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userID := contexts.GetUser(r.Context()).GetID()

@@ -12,7 +12,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 )
 
-type GroupHandler struct {
+type groupHandler struct {
 	svc        service
 	errHandler errHandler
 }
@@ -25,11 +25,11 @@ type errHandler interface {
 	)
 }
 
-func NewHandler(svc service, errHandler errHandler) *GroupHandler {
-	return &GroupHandler{svc: svc, errHandler: errHandler}
+func newHandler(svc service, errHandler errHandler) *groupHandler {
+	return &groupHandler{svc: svc, errHandler: errHandler}
 }
 
-type groupHandler interface {
+type handler interface {
 	Create(w http.ResponseWriter, r *http.Request)
 	FindAll(w http.ResponseWriter, r *http.Request)
 	FindByID(w http.ResponseWriter, r *http.Request)
@@ -37,9 +37,9 @@ type groupHandler interface {
 }
 
 // POST /v1/groups
-func (h *GroupHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *groupHandler) Create(w http.ResponseWriter, r *http.Request) {
 	tracer := otel.Tracer("ms_group/internal/features/group")
-	ctx, span := tracer.Start(r.Context(), "GroupHandler.Create")
+	ctx, span := tracer.Start(r.Context(), "groupHandler.Create")
 	defer span.End()
 
 	var dto CreateGroupDTO
@@ -67,9 +67,9 @@ func (h *GroupHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // GET /v1/groups
-func (h *GroupHandler) FindAll(w http.ResponseWriter, r *http.Request) {
+func (h *groupHandler) FindAll(w http.ResponseWriter, r *http.Request) {
 	tracer := otel.Tracer("ms_group/internal/features/group")
-	ctx, span := tracer.Start(r.Context(), "GroupHandler.FindAll")
+	ctx, span := tracer.Start(r.Context(), "groupHandler.FindAll")
 	defer span.End()
 
 	f, err := httputils.GetFilters(r, []string{"id", "-id", "name", "-name"})
@@ -98,9 +98,9 @@ func (h *GroupHandler) FindAll(w http.ResponseWriter, r *http.Request) {
 }
 
 // GET /v1/groups/{id}
-func (h *GroupHandler) FindByID(w http.ResponseWriter, r *http.Request) {
+func (h *groupHandler) FindByID(w http.ResponseWriter, r *http.Request) {
 	tracer := otel.Tracer("ms_group/internal/features/group")
-	ctx, span := tracer.Start(r.Context(), "GroupHandler.FindByID")
+	ctx, span := tracer.Start(r.Context(), "groupHandler.FindByID")
 	defer span.End()
 
 	id, ok := httputils.ParseUUID(w, r, h.errHandler)
@@ -124,9 +124,9 @@ func (h *GroupHandler) FindByID(w http.ResponseWriter, r *http.Request) {
 }
 
 // DELETE /v1/groups/{id}
-func (h *GroupHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (h *groupHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	tracer := otel.Tracer("ms_group/internal/features/group")
-	ctx, span := tracer.Start(r.Context(), "GroupHandler.Delete")
+	ctx, span := tracer.Start(r.Context(), "groupHandler.Delete")
 	defer span.End()
 
 	id, ok := httputils.ParseUUID(w, r, h.errHandler)

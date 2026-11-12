@@ -18,20 +18,20 @@ type GroupSubRouter interface {
 	MountInGroup(router chi.Router)
 }
 
-type GroupRouter struct {
-	handler        groupHandler
+type groupRouter struct {
+	handler        handler
 	authMiddleware authMiddleware
 	m              middleware
 	subs           []GroupSubRouter
 }
 
-func NewRouter(
-	handler groupHandler,
+func newRouter(
+	handler handler,
 	authMiddleware authMiddleware,
 	m middleware,
 	subs ...GroupSubRouter,
-) *GroupRouter {
-	return &GroupRouter{
+) *groupRouter {
+	return &groupRouter{
 		handler:        handler,
 		authMiddleware: authMiddleware,
 		m:              m,
@@ -39,7 +39,7 @@ func NewRouter(
 	}
 }
 
-func (r *GroupRouter) Routes(router chi.Router) {
+func (r *groupRouter) Register(router chi.Router) {
 	router.Route("/groups", func(router chi.Router) {
 		router.Use(r.authMiddleware.RequireActivatedUser)
 
