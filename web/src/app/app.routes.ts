@@ -37,10 +37,37 @@ export const routes: Routes = [
         loadComponent: () => import('./features/groups/group-form/group-form.component').then(m => m.GroupFormComponent),
       },
       {
-        path: 'groups/:groupId',
+        path: "groups/:groupId",
         canActivate: [groupMemberGuard],
         children: [
-          { path: '', loadComponent: () => import('./features/groups/group-detail/group-detail.component').then(m => m.GroupDetailComponent) },
+          {
+            path: "",
+            loadComponent: () =>
+              import("./features/groups/group-detail/group-detail.component").then(
+                (m) => m.GroupDetailComponent
+              ),
+          },
+          {
+            path: "expenses",
+            loadComponent: () =>
+              import("./features/expenses/expenses-list/expenses-list.component").then(
+                (m) => m.ExpensesListComponent
+              ),
+          },
+          {
+            path: "expenses/new",
+            loadComponent: () =>
+              import("./features/expenses/expense-form/expense-form.component").then(
+                (m) => m.ExpenseFormComponent
+              ),
+          },
+          {
+            path: "expenses/:id",
+            loadComponent: () =>
+              import("./features/expenses/expense-form/expense-form.component").then(
+                (m) => m.ExpenseFormComponent
+              ),
+          },
         ],
       },
     ]

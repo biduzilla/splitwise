@@ -97,3 +97,50 @@ export interface Invitation {
   url: string;
   expires_at: string;
 }
+
+/* ============ Expense ============ */
+
+export type SplitMode = "equal" | "exact";
+
+export interface ExpenseShare {
+  user_id: string;
+  amount: number;
+}
+
+export interface Expense {
+  id: string;
+  group_id: string;
+  paid_by: string;
+  amount: number;
+  description: string;
+  category?: string | null;
+  split_mode: SplitMode;
+  expense_date: string;
+  version: number;
+  created_at: string;
+  shares: ExpenseShare[];
+}
+
+export interface CreateExpenseInput {
+  group_id: string;
+  paid_by: string;
+  amount: number;
+  description: string;
+  category?: string;
+  split_mode: SplitMode;
+  participants?: string[];
+  shares?: ExpenseShare[];
+}
+
+export interface UpdateExpenseInput extends Omit<CreateExpenseInput, "group_id"> {
+  version: number;
+}
+
+export interface ExpenseFilters {
+  page?: number;
+  page_size?: number;
+  sort?: "id" | "-id" | "amount" | "-amount" | "expense_date" | "-expense_date";
+  start_date?: string;
+  end_date?: string;
+  user_id?: string;
+}

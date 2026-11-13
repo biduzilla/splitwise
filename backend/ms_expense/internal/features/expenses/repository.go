@@ -210,7 +210,7 @@ func (r *expenseRepository) FindByGroupID(
 		AND ($2::timestamptz IS NULL OR created_at >= $2)
         AND ($3::timestamptz IS NULL OR created_at <= $3)
 	`
-	if err := r.db.QueryRowContext(ctx, q_count, groupID).Scan(&total); err != nil {
+	if err := r.db.QueryRowContext(ctx, q_count, groupID, startDate, endDate).Scan(&total); err != nil {
 		return nil, filters.Metadata{}, err
 	}
 
@@ -225,10 +225,10 @@ func (r *expenseRepository) FindByGroupID(
 			AND ($2::timestamptz IS NULL OR created_at >= $2)
         	AND ($3::timestamptz IS NULL OR created_at <= $3)
         ORDER BY %s %s
-        LIMIT $2 OFFSET $3`,
+        LIMIT $4 OFFSET $5`,
 		f.SortColumn(), f.SortDirection())
 
-	rows, err := r.db.QueryContext(ctx, q, groupID, f.Limit(), f.Offset())
+	rows, err := r.db.QueryContext(ctx, q, groupID, startDate, endDate, f.Limit(), f.Offset())
 	if err != nil {
 		return nil, filters.Metadata{}, err
 	}

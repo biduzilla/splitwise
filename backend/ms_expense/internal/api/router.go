@@ -78,7 +78,7 @@ func (router *Router) RegisterRoutes(db *sql.DB) *chi.Mux {
 	r.Route("/v1", func(r chi.Router) {
 		r.Use(router.m.RateLimit)
 		r.Use(router.m.EnableCORS)
-		// r.Use(router.m.Authenticate)
+		r.Use(router.m.Authenticate)
 
 		for _, route := range router.routes {
 			route.RegisterRoutes(r)

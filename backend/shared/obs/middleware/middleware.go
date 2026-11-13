@@ -253,15 +253,15 @@ func (m *Middleware) RateLimit(next http.Handler) http.Handler {
 		limiter  *rate.Limiter
 		lastSeen time.Time
 	}
+
 	var (
-		mu      sync.Mutex
+		mu      sync.RWMutex
 		clients = make(map[string]*client)
 	)
 
 	go func() {
 		ticker := time.NewTicker(time.Minute)
 		defer ticker.Stop()
-
 		for {
 			select {
 			case <-ticker.C:
@@ -282,31 +282,48 @@ func (m *Middleware) RateLimit(next http.Handler) http.Handler {
 	}()
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if m.config.Limiter.Enabled {
-			ip, _, err := net.SplitHostPort(r.RemoteAddr)
-			if err != nil {
-				m.errHandler.HandlerError(w, r, err)
-				return
-			}
+		if !m.config.Limiter.Enabled {
+			next.ServeHTTP(w, r)
+			return
+		}
 
+		if r.URL.Path == "/health" || r.URL.Path == "/metrics" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		ip, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			ip = r.RemoteAddr
+		}
+
+		mu.RLock()
+		c, ok := clients[ip]
+		mu.RUnlock()
+
+		if !ok {
 			mu.Lock()
-
-			if _, found := clients[ip]; !found {
-				clients[ip] = &client{
+			c, ok = clients[ip]
+			if !ok {
+				c = &client{
 					limiter: rate.NewLimiter(
 						rate.Limit(m.config.Limiter.RPS),
 						m.config.Limiter.Burst,
 					),
+					lastSeen: time.Now(),
 				}
-			}
-			clients[ip].lastSeen = time.Now()
-			if !clients[ip].limiter.Allow() {
-				mu.Unlock()
-				m.errHandler.HandlerError(w, r, apierror.ErrRateLimitExceeded)
-				return
+				clients[ip] = c
 			}
 			mu.Unlock()
 		}
+
+		if !c.limiter.Allow() {
+			w.Header().Set("Retry-After", "1")
+			w.Header().Set("X-RateLimit-Limit", fmt.Sprintf("%.0f/s", m.config.Limiter.RPS))
+			m.errHandler.HandlerError(w, r, apierror.ErrRateLimitExceeded)
+			return
+		}
+
 		next.ServeHTTP(w, r)
 	})
 }

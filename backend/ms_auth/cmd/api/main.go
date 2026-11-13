@@ -21,8 +21,8 @@ func main() {
 	cfg.Base.DB.MaxIdleConns = 25
 	cfg.Base.DB.MaxIdleTime = "15m"
 
-	cfg.Base.Limiter.RPS = 2.0
-	cfg.Base.Limiter.Burst = 4
+	cfg.Base.Limiter.RPS = 50.0
+	cfg.Base.Limiter.Burst = 100
 	cfg.Base.Limiter.Enabled = true
 
 	cfg.Base.Security.PrivateKeyPath = "resources/keys/privateKey.pem"

@@ -1,0 +1,111 @@
+<div class="mx-auto max-w-6xl px-6 py-8">
+  <!-- Cabeçalho -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900">Despesas</h1>
+      <p class="mt-1 text-sm text-slate-500">
+        Total: {{ totalCents() / 100 | currency: "BRL" }}
+      </p>
+    </div>
+    <a
+      [routerLink]="['/groups', ctx.activeGroupId(), 'expenses', 'new']"
+      class="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 font-medium text-white shadow-sm transition-all duration-150 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 active:scale-[0.98]"
+    >
+      Nova despesa
+    </a>
+  </div>
+
+  <!-- Filtros -->
+  <div class="mt-6 flex flex-wrap gap-4">
+    <div>
+      <label class="mb-1.5 block text-sm font-medium text-slate-700">De</label>
+      <input
+        type="date"
+        [value]="filters().start_date ?? ''"
+        (change)="onFilterChange('start_date', $any($event.target).value)"
+        class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+      />
+    </div>
+    <div>
+      <label class="mb-1.5 block text-sm font-medium text-slate-700">Até</label>
+      <input
+        type="date"
+        [value]="filters().end_date ?? ''"
+        (change)="onFilterChange('end_date', $any($event.target).value)"
+        class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+      />
+    </div>
+    <div>
+      <label class="mb-1.5 block text-sm font-medium text-slate-700">Ordenar</label>
+      <select
+        [value]="filters().sort"
+        (change)="onFilterChange('sort', $any($event.target).value)"
+        class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+      >
+        <option value="-expense_date">Mais recentes</option>
+        <option value="expense_date">Mais antigas</option>
+        <option value="-amount">Maior valor</option>
+        <option value="amount">Menor valor</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Estados -->
+  @if (loading()) {
+    <p class="mt-8 text-sm text-slate-500">Carregando despesas…</p>
+  } @else if (error()) {
+    <div class="mt-8 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+      {{ error() }}
+    </div>
+  } @else if (isEmpty()) {
+    <div class="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
+      <p class="text-sm text-slate-500">Nenhuma despesa ainda.</p>
+      <a
+        [routerLink]="['/groups', ctx.activeGroupId(), 'expenses', 'new']"
+        class="mt-4 inline-block text-emerald-600 hover:underline"
+      >
+        Adicione a primeira
+      </a>
+    </div>
+  } @else {
+    <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <table class="w-full text-left text-sm">
+        <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <tr>
+            <th class="px-6 py-3">Data</th>
+            <th class="px-6 py-3">Descrição</th>
+            <th class="px-6 py-3">Pago por</th>
+            <th class="px-6 py-3 text-right">Valor</th>
+            <th class="px-6 py-3"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          @for (expense of expenses(); track expense.id) {
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4 text-slate-600">{{ expense.expense_date | date: "dd/MM/yyyy" }}</td>
+              <td class="px-6 py-4 font-medium text-slate-900">{{ expense.description }}</td>
+              <td class="px-6 py-4 text-slate-600">{{ memberName(expense.paid_by) }}</td>
+              <td class="px-6 py-4 text-right font-mono font-medium text-slate-900">
+                {{ expense.amount / 100 | currency: "BRL" }}
+              </td>
+              <td class="px-6 py-4 text-right">
+                <a
+                  [routerLink]="['/groups', ctx.activeGroupId(), 'expenses', expense.id]"
+                  class="text-emerald-600 hover:underline"
+                >
+                  Editar
+                </a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination
+      [currentPage]="metadata().current_page ?? 1"
+      [lastPage]="metadata().last_page ?? 1"
+      (pageChange)="onPageChange($event)"
+    />
+  }
+</div>

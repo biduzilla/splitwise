@@ -111,19 +111,22 @@ func (h *expenseHandler) List(w http.ResponseWriter, r *http.Request) {
 	ctx, span := tracer.Start(r.Context(), "expenseHandler.List")
 	defer span.End()
 
-	groupID, err := httputils.PathParamUUID(r, "group_id")
-	if err != nil {
-		span.RecordError(err)
+	v := validator.New()
+
+	groupID := httputils.ReadUUIDQuery(r, "group_id", v)
+	if !v.Valid() {
 		span.SetStatus(codes.Error, "Invalid UUID")
-		h.errHandler.HandlerError(w, r, apierror.NewBadRequestError(err))
+		h.errHandler.HandlerError(w, r, apierror.NewValidationError(v.Errors))
+		return
 	}
 
-	startDate, endDate, f, err := h.getFindAllParams(r)
+	startDate, endDate, f, err := h.getFindAllParams(r, v)
 
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Invalid query parameters")
 		h.errHandler.HandlerError(w, r, err)
+		return
 	}
 
 	models, metadata, err := h.service.FindAll(
@@ -207,14 +210,16 @@ func (h *expenseHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Failed to Delete")
 		h.errHandler.HandlerError(w, r, err)
-		h.errHandler.HandlerError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *expenseHandler) getFindAllParams(r *http.Request) (*time.Time, *time.Time, filters.Filters, error) {
-	v := validator.New()
+func (h *expenseHandler) getFindAllParams(r *http.Request, v *validator.Validator) (*time.Time, *time.Time, filters.Filters, error) {
+	if v == nil {
+		v = validator.New()
+	}
+
 	startDate := httputils.ReadDateParam(r, "start_date", v)
 	endDate := httputils.ReadDateParam(r, "end_date", v)
 

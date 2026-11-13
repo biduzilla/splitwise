@@ -99,7 +99,7 @@ func ReadDateParam(
 	return &t
 }
 
-func ReadUUIDParam(r *http.Request, key string, v FieldErrorAdder) uuid.UUID {
+func ReadUUIDQuery(r *http.Request, key string, v FieldErrorAdder) uuid.UUID {
 	s := getValueQuery(r, key)
 	if s == "" {
 		return uuid.Nil()
@@ -113,8 +113,6 @@ func ReadUUIDParam(r *http.Request, key string, v FieldErrorAdder) uuid.UUID {
 }
 
 func getValueQuery(r *http.Request, key string) string {
-	if key == "" {
-		return ""
-	}
-	return r.URL.Query().Get(key)
+	v := r.URL.Query().Get(key)
+	return strings.TrimSpace(v)
 }

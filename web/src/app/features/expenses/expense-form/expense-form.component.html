@@ -1,0 +1,140 @@
+<div class="mx-auto max-w-2xl px-6 py-8">
+  <a
+    [routerLink]="['/groups', ctx.activeGroupId(), 'expenses']"
+    class="text-sm text-slate-500 hover:text-slate-900"
+  >
+    ← Voltar
+  </a>
+
+  <h1 class="mt-4 text-2xl font-bold tracking-tight text-slate-900">
+    {{ isEdit() ? "Editar despesa" : "Nova despesa" }}
+  </h1>
+
+  @if (error()) {
+    <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+      {{ error() }}
+    </div>
+  }
+
+  <form (submit)="$event.preventDefault(); onSubmit()" class="mt-6 space-y-5">
+    <!-- Valor -->
+    <div>
+      <label class="mb-1.5 block text-sm font-medium text-slate-700">Valor (centavos)</label>
+      <input
+        type="number"
+        [formField]="expenseForm.amount"
+        class="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+        placeholder="Ex: 24000 = R$ 240,00"
+      />
+      @if (fieldErrors()["amount"]) {
+        <p class="mt-1.5 text-xs text-red-600">{{ fieldErrors()["amount"] }}</p>
+      }
+    </div>
+
+    <!-- Descrição -->
+    <div>
+      <label class="mb-1.5 block text-sm font-medium text-slate-700">Descrição</label>
+      <input
+        type="text"
+        [formField]="expenseForm.description"
+        class="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+        placeholder="Jantar, gasolina, etc."
+      />
+      @if (fieldErrors()["description"]) {
+        <p class="mt-1.5 text-xs text-red-600">{{ fieldErrors()["description"] }}</p>
+      }
+    </div>
+
+    <!-- Pagador -->
+    <div>
+      <label class="mb-1.5 block text-sm font-medium text-slate-700">Quem pagou?</label>
+      <select
+        [value]="model().paid_by"
+        (change)="model.update(m => ({ ...m, paid_by: $any($event.target).value }))"
+        class="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+      >
+        @for (member of members(); track member.user_id) {
+          <option [value]="member.user_id">{{ memberName(member) }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Modo de divisão -->
+    <div>
+      <label class="mb-1.5 block text-sm font-medium text-slate-700">Modo de divisão</label>
+      <div class="flex gap-2">
+        <button
+          type="button"
+          (click)="setSplitMode('equal')"
+          class="rounded-lg px-4 py-2 text-sm font-medium"
+          [class]="model().split_mode === 'equal'
+            ? 'bg-emerald-600 text-white'
+            : 'border border-slate-300 text-slate-700 hover:bg-slate-50'"
+        >
+          Igual
+        </button>
+        <button
+          type="button"
+          (click)="setSplitMode('exact')"
+          class="rounded-lg px-4 py-2 text-sm font-medium"
+          [class]="model().split_mode === 'exact'
+            ? 'bg-emerald-600 text-white'
+            : 'border border-slate-300 text-slate-700 hover:bg-slate-50'"
+        >
+          Exato
+        </button>
+      </div>
+    </div>
+
+    <!-- Participantes (equal) -->
+    @if (model().split_mode === "equal") {
+      <div>
+        <p class="mb-2 text-sm font-medium text-slate-700">Quem vai dividir essa despesa?</p>
+        <div class="space-y-2">
+          @for (member of members(); track member.user_id) {
+            <label class="flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                [checked]="model().participants.includes(member.user_id)"
+                (change)="changePayer(member.user_id)"
+                class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+              />
+              {{ memberName(member) }}
+            </label>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Shares (exact) -->
+    @if (model().split_mode === "exact") {
+      <div>
+        <p class="mb-2 text-sm font-medium text-slate-700">Valores exatos por pessoa (centavos)</p>
+        <div class="space-y-2">
+          @for (member of members(); track member.user_id) {
+            <div class="flex items-center gap-3">
+              <span class="w-40 text-sm text-slate-700">{{ memberName(member) }}</span>
+              <input
+                type="number"
+                [value]="model().shares[member.user_id] ?? 0"
+                (input)="updateShare(member.user_id, +$any($event.target).value)"
+                class="w-32 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+              />
+            </div>
+          }
+        </div>
+        <p class="mt-2 text-xs" [class]="sharesMatchTotal() ? 'text-emerald-600' : 'text-red-600'">
+          Soma: {{ sharesSum() }} / {{ model().amount ?? 0 }}
+        </p>
+      </div>
+    }
+
+    <button
+      type="submit"
+      [disabled]="submitting() || !canSubmit()"
+      class="inline-flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 font-medium text-white shadow-sm transition-all duration-150 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+    >
+      {{ submitting() ? "Salvando…" : "Salvar despesa" }}
+    </button>
+  </form>
+</div>
