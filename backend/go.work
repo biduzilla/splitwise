@@ -6,4 +6,5 @@ use (
 	./shared
 	./messaging
 	./ms_expense
+	./ms_balance
 )
