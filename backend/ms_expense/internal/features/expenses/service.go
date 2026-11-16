@@ -76,7 +76,6 @@ func newService(
 	we writeExecutor,
 	groupClient groupClient,
 	producer producer,
-	kb cache.KeyBuilder,
 	c cache.Cache,
 	logger *slog.Logger,
 ) *expenseService {
@@ -226,7 +225,7 @@ func (s *expenseService) Update(
 	}
 
 	me := contexts.GetUser(ctx).GetID()
-	if saved.CreatedBy != &me && groupDetail.OwnerID != me {
+	if groupDetail.OwnerID != me {
 		return apierror.ErrForbidden
 	}
 
@@ -240,7 +239,7 @@ func (s *expenseService) Update(
 			return err
 		}
 
-		return s.repo.InsertShares(ctx, model.ID, shares)
+		return s.repo.ReplaceShares(ctx, model.ID, shares)
 	}); err != nil {
 		return err
 	}
@@ -271,7 +270,7 @@ func (s *expenseService) Delete(ctx context.Context, id uuid.UUID) error {
 		return err
 	}
 	me := contexts.GetUser(ctx).GetID()
-	if e.CreatedBy != &me && group.OwnerID != me {
+	if group.OwnerID != me {
 		return apierror.ErrForbidden
 	}
 

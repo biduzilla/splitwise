@@ -10,33 +10,67 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+type InfraDeps struct {
+	DB     *sql.DB
+	Logger *slog.Logger
+	Cache  cache.Cache
+	Tx     transaction.Manager
+}
+
+type HTTPDeps struct {
+	ErrHandler     errHandler
+	AuthMiddleware authMiddleware
+}
+
+type MessagingDeps struct {
+	Producer producer
+}
+
+type DomainDeps struct {
+	MembershipService membershipService
+}
+
+type Dependencies struct {
+	Infra     InfraDeps
+	HTTP      HTTPDeps
+	Messaging MessagingDeps
+	Domain    DomainDeps
+	Config    config.Config
+}
+
 type Module struct {
 	Service *invitationService
 	router  *invitationRouter
 }
 
-func NewModule(
-	db *sql.DB,
-	logger *slog.Logger,
-	c cache.Cache,
-	tx transaction.Manager,
-	producer producer,
-	membershipService membershipService,
-	errHandler errHandler,
-	authMiddleware authMiddleware,
-	config config.Config,
-) (*Module, error) {
-	repo := newRepository(db, logger)
+func NewModule(deps Dependencies) (*Module, error) {
+	repo := newRepository(deps.Infra.DB, deps.Infra.Logger)
 
 	kb := cache.NewKeyBuilder("invitation")
-	we := transaction.NewWriterExecutor(tx, c, kb)
-	tokenService, err := newTokenService(config.Base.Security.PrivateKeyPath, config.Base.Security.PublicKeyPath)
+	we := transaction.NewWriterExecutor(deps.Infra.Tx, deps.Infra.Cache, kb)
+
+	tokenService, err := newTokenService(
+		deps.Config.Base.Security.PrivateKeyPath,
+		deps.Config.Base.Security.PublicKeyPath,
+	)
 	if err != nil {
 		return nil, err
 	}
-	service := newService(repo, c, we, kb, producer, logger, membershipService, tokenService, config.InviteURLBase)
-	handler := newHandler(service, errHandler)
-	router := newRouter(handler, authMiddleware)
+
+	service := newService(
+		repo,
+		deps.Infra.Cache,
+		we,
+		kb,
+		deps.Messaging.Producer,
+		deps.Infra.Logger,
+		deps.Domain.MembershipService,
+		tokenService,
+		deps.Config.InviteURLBase,
+	)
+
+	handler := newHandler(service, deps.HTTP.ErrHandler)
+	router := newRouter(handler, deps.HTTP.AuthMiddleware)
 
 	return &Module{
 		Service: service,

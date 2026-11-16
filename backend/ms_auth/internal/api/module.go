@@ -1,15 +1,8 @@
 package api
 
 import (
-	"database/sql"
-	"log/slog"
-	"ms_auth/internal/core/security"
 	"ms_auth/internal/features/auth"
 	"ms_auth/internal/features/user"
-	"shared/apierror"
-	"shared/cache"
-	"shared/obs/middleware"
-	"shared/transaction"
 )
 
 type modules struct {
@@ -17,19 +10,37 @@ type modules struct {
 	auth *auth.Module
 }
 
-func NewModules(
-	db *sql.DB,
-	logger *slog.Logger,
-	errHandler *apierror.ErrorHandler,
-	jwtService *security.JwtService,
-	tx transaction.Manager,
-	c cache.Cache,
-	mw *middleware.Middleware,
-) *modules {
-	user := user.NewModule(db, logger, errHandler, tx, c, mw)
-	auth := auth.NewModule(db, logger, jwtService, user.Service, tx, errHandler)
+func NewModules(deps AppDependencies) *modules {
+	userMod := user.NewModule(user.Dependencies{
+		Infra: user.InfraDeps{
+			DB:     deps.Infra.DB,
+			Logger: deps.Infra.Logger,
+			Tx:     deps.Infra.Tx,
+			Cache:  deps.Infra.Cache,
+		},
+		HTTP: user.HTTPDeps{
+			ErrHandler: deps.HTTP.ErrHandler,
+			AuthMW:     deps.HTTP.AuthMW,
+		},
+	})
+
+	authMod := auth.NewModule(auth.Dependencies{
+		Infra: auth.InfraDeps{
+			DB:     deps.Infra.DB,
+			Logger: deps.Infra.Logger,
+			Tx:     deps.Infra.Tx,
+			Cache:  deps.Infra.Cache,
+		},
+		HTTP: auth.HTTPDeps{
+			ErrHandler: deps.HTTP.ErrHandler,
+		},
+		Domain: auth.Domain{
+			Jwt:   deps.Services.jwtService,
+			Users: userMod.Service,
+		},
+	})
 
 	return &modules{
-		user, auth,
+		userMod, authMod,
 	}
 }

@@ -17,68 +17,94 @@ import (
 	"github.com/IBM/sarama"
 )
 
+type InfraDeps struct {
+	DB     *sql.DB
+	Logger *slog.Logger
+	Cache  cache.Cache
+	Tx     transaction.Manager
+}
+
+type HTTPDeps struct {
+	ErrHandler *apierror.ErrorHandler
+	AuthMW     *middleware.Middleware
+	CustomMW   *m.Middleware
+	Clients    clients
+}
+
+type MessagingDeps struct {
+	Producer *messaging.Producer
+}
+
+type AppDependencies struct {
+	Infra     InfraDeps
+	HTTP      HTTPDeps
+	Messaging MessagingDeps
+	Config    config.Config
+}
+
 type modules struct {
 	group      *group.Module
 	invitation *invitation.Module
 	membership *membership.Module
 }
 
-func NewModule(
-	db *sql.DB,
-	logger *slog.Logger,
-	c cache.Cache,
-	tx transaction.Manager,
-	producer sarama.SyncProducer,
-	errHandler *apierror.ErrorHandler,
-	clients clients,
-	mw *middleware.Middleware,
-	config config.Config,
-	customMiddleware *m.Middleware,
-) (*modules, error) {
-	producersSvc := messaging.NewProducer(producer, logger)
+func NewModules(deps AppDependencies, rawProducer sarama.SyncProducer) (*modules, error) {
 
-	membership := membership.NewModule(
-		db,
-		logger,
-		c,
-		tx,
-		producersSvc,
-		errHandler,
-		nil,
-		clients.user,
-	)
+	membershipMod := membership.NewModule(membership.Dependencies{
+		Infra: membership.InfraDeps{
+			DB: deps.Infra.DB, Logger: deps.Infra.Logger, Cache: deps.Infra.Cache, Tx: deps.Infra.Tx,
+		},
+		HTTP: membership.HTTPDeps{
+			ErrHandler: deps.HTTP.ErrHandler, UserClient: deps.HTTP.Clients.user,
+		},
+		Messaging: membership.MessagingDeps{
+			Producer: deps.Messaging.Producer,
+		},
+		Domain: membership.DomainDeps{
+			GroupFinder: nil,
+		},
+	})
 
-	invitation, err := invitation.NewModule(
-		db,
-		logger,
-		c,
-		tx,
-		producersSvc,
-		membership.Service,
-		errHandler,
-		mw,
-		config,
-	)
+	invitationMod, err := invitation.NewModule(invitation.Dependencies{
+		Infra: invitation.InfraDeps{
+			DB: deps.Infra.DB, Logger: deps.Infra.Logger, Cache: deps.Infra.Cache, Tx: deps.Infra.Tx,
+		},
+		HTTP: invitation.HTTPDeps{
+			ErrHandler: deps.HTTP.ErrHandler, AuthMiddleware: deps.HTTP.AuthMW,
+		},
+		Messaging: invitation.MessagingDeps{
+			Producer: deps.Messaging.Producer,
+		},
+		Domain: invitation.DomainDeps{
+			MembershipService: membershipMod.Service,
+		},
+		Config: deps.Config,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	group := group.NewModule(
-		db,
-		logger,
-		c,
-		tx,
-		producersSvc,
-		membership.Service,
-		errHandler,
-		mw,
-		customMiddleware,
-		membership, invitation,
-	)
+	groupMod := group.NewModule(group.Dependencies{
+		Infra: group.InfraDeps{
+			DB: deps.Infra.DB, Logger: deps.Infra.Logger, Cache: deps.Infra.Cache, Tx: deps.Infra.Tx,
+		},
+		HTTP: group.HTTPDeps{
+			ErrHandler: deps.HTTP.ErrHandler, AuthMiddleware: deps.HTTP.AuthMW, Middleware: deps.HTTP.CustomMW,
+		},
+		Messaging: group.MessagingDeps{
+			Producer: deps.Messaging.Producer,
+		},
+		Domain: group.DomainDeps{
+			MembershipService: membershipMod.Service,
+			SubRouters:        []group.GroupSubRouter{membershipMod, invitationMod},
+		},
+	})
+
+	membershipMod.Service.SetGroupFinder(groupMod.Service)
 
 	return &modules{
-		group:      group,
-		invitation: invitation,
-		membership: membership,
+		group:      groupMod,
+		invitation: invitationMod,
+		membership: membershipMod,
 	}, nil
 }

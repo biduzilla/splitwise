@@ -3,6 +3,7 @@ package auth
 import (
 	"database/sql"
 	"log/slog"
+	"shared/cache"
 	"shared/transaction"
 
 	"github.com/go-chi/chi/v5"
@@ -13,17 +14,32 @@ type Module struct {
 	router  *authRouter
 }
 
-func NewModule(
-	db *sql.DB,
-	logger *slog.Logger,
-	jwt jwtService,
-	users userService,
-	tx transaction.Manager,
-	errHandler errorHandler,
-) *Module {
-	repo := newRepository(db, logger)
-	service := newService(jwt, users, repo, tx)
-	handler := newHandler(service, errHandler)
+type InfraDeps struct {
+	DB     *sql.DB
+	Logger *slog.Logger
+	Tx     transaction.Manager
+	Cache  cache.Cache
+}
+
+type HTTPDeps struct {
+	ErrHandler errorHandler
+}
+
+type Domain struct {
+	Jwt   jwtService
+	Users userService
+}
+
+type Dependencies struct {
+	Infra  InfraDeps
+	HTTP   HTTPDeps
+	Domain Domain
+}
+
+func NewModule(deps Dependencies) *Module {
+	repo := newRepository(deps.Infra.DB, deps.Infra.Logger)
+	service := newService(deps.Domain.Jwt, deps.Domain.Users, repo, deps.Infra.Tx)
+	handler := newHandler(service, deps.HTTP.ErrHandler)
 	route := newRouter(handler)
 
 	return &Module{

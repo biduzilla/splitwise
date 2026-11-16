@@ -1,42 +1,33 @@
 package api
 
 import (
-	"database/sql"
-	"log/slog"
-	m "ms_expense/internal/core/middleware"
 	"ms_expense/internal/features/expenses"
-	"shared/apierror"
-	"shared/cache"
-	"shared/obs/middleware"
-	"shared/transaction"
 )
 
 type modules struct {
 	expense *expenses.Module
 }
 
-func NewModules(
-	db *sql.DB,
-	logger *slog.Logger,
-	tx transaction.Manager,
-	clients *clients,
-	producer *producer,
-	c cache.Cache,
-	errHandler *apierror.ErrorHandler,
-	mw *middleware.Middleware,
-	idemMw *m.Idempotency,
-) *modules {
+func NewModules(deps AppDependencies) *modules {
+	expenseDeps := expenses.Dependencies{
+		Infra: expenses.InfraDeps{
+			DB:     deps.Infra.DB,
+			Logger: deps.Infra.Logger,
+			Tx:     deps.Infra.Tx,
+			Cache:  deps.Infra.Cache,
+		},
+		HTTP: expenses.HTTPDeps{
+			ErrHandler:  deps.HTTP.ErrHandler,
+			AuthMW:      deps.HTTP.AuthMW,
+			IdemMW:      deps.HTTP.IdemMW,
+			GroupClient: deps.HTTP.Clients.group,
+		},
+		Messaging: expenses.MessagingDeps{
+			Producer: deps.Messaging.Producer.expenses,
+		},
+	}
+
 	return &modules{
-		expense: expenses.NewModule(
-			db,
-			logger,
-			tx,
-			clients.group,
-			producer.expenses,
-			c,
-			errHandler,
-			mw,
-			idemMw,
-		),
+		expense: expenses.NewModule(expenseDeps),
 	}
 }

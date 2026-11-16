@@ -1,6 +1,7 @@
 package api
 
 import (
+	"messaging"
 	m "ms_group/internal/core/middleware"
 	"shared/apierror"
 	"shared/auth/security"
@@ -14,55 +15,59 @@ type dependencies struct {
 }
 
 func (app *application) buildDependencies(shutdown chan struct{}) (*dependencies, error) {
-	cacheClient, err := cache.NewRedisCache(app.config.Base.Cache.Addr,
-		app.config.Base.Cache.Password, app.config.Base.Cache.Db, nil)
-
+	cacheClient, err := cache.NewRedisCache(
+		app.config.Base.Cache.Addr,
+		app.config.Base.Cache.Password,
+		app.config.Base.Cache.Db, nil,
+	)
 	if err != nil {
 		return nil, err
 	}
-
-	app.Logger.Info("reddis connection pool established")
+	app.Logger.Info("redis connection pool established")
 
 	jwtService, err := security.NewService(app.config.Base)
 	if err != nil {
 		return nil, err
 	}
+
 	tx := transaction.NewManager(app.db)
 	clients := NewClients(app.config)
 	errHandler := apierror.NewErrorHandler(app.Logger)
-	mw := middleware.New(
-		errHandler,
-		app.config.Base,
-		jwtService,
-		app.Logger,
-		shutdown,
-	)
-
+	mw := middleware.New(errHandler, app.config.Base, jwtService, app.Logger, shutdown)
 	customMiddleware := m.New(errHandler, nil)
+	producersSvc := messaging.NewProducer(app.kafkaProducer, app.Logger)
 
-	modules, err := NewModule(
-		app.db,
-		app.Logger,
-		cacheClient,
-		tx,
-		app.kafkaProducer,
-		errHandler,
-		*clients,
-		mw,
-		app.config,
-		customMiddleware,
-	)
+	appDeps := AppDependencies{
+		Infra: InfraDeps{
+			DB:     app.db,
+			Logger: app.Logger,
+			Cache:  cacheClient,
+			Tx:     tx,
+		},
+		HTTP: HTTPDeps{
+			ErrHandler: errHandler,
+			AuthMW:     mw,
+			CustomMW:   customMiddleware,
+			Clients:    *clients,
+		},
+		Messaging: MessagingDeps{
+			Producer: producersSvc,
+		},
+		Config: app.config,
+	}
+
+	mods, err := NewModules(appDeps, app.kafkaProducer)
 	if err != nil {
 		return nil, err
 	}
 
-	customMiddleware.SetGroupService(modules.group.Service)
+	customMiddleware.SetGroupService(mods.group.Service)
 
 	router := NewRouter(
 		errHandler,
 		mw,
-		modules.group,
-		modules.invitation,
+		mods.group,
+		mods.invitation,
 	)
 
 	return &dependencies{

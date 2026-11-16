@@ -14,20 +14,35 @@ type Module struct {
 	router  *userRouter
 }
 
-func NewModule(
-	db *sql.DB,
-	logger *slog.Logger,
-	errHandler errorHandler,
-	tx transaction.Manager,
-	c cache.Cache,
-	m authMiddleware,
-) *Module {
-	repo := newRepository(db, logger)
+type InfraDeps struct {
+	DB     *sql.DB
+	Logger *slog.Logger
+	Tx     transaction.Manager
+	Cache  cache.Cache
+}
+
+type HTTPDeps struct {
+	ErrHandler errorHandler
+	AuthMW     authMiddleware
+}
+
+type Dependencies struct {
+	Infra InfraDeps
+	HTTP  HTTPDeps
+}
+
+func NewModule(deps Dependencies) *Module {
+	repo := newRepository(deps.Infra.DB, deps.Infra.Logger)
 	kb := cache.NewKeyBuilder("user")
-	we := transaction.NewWriterExecutor(tx, c, kb)
-	service := newService(repo, c, kb, we)
-	handler := newHandler(service, errHandler)
-	route := newRouter(handler, m)
+
+	service := newService(
+		repo,
+		deps.Infra.Cache,
+		kb,
+		transaction.NewWriterExecutor(deps.Infra.Tx, deps.Infra.Cache, kb),
+	)
+	handler := newHandler(service, deps.HTTP.ErrHandler)
+	route := newRouter(handler, deps.HTTP.AuthMW)
 
 	return &Module{
 		Service: service,

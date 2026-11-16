@@ -291,7 +291,7 @@ func (r *expenseRepository) Update(
 	if tx == nil {
 		return errors.New("transaction required")
 	}
-	err := r.db.QueryRowContext(
+	err := tx.QueryRowContext(
 		ctx,
 		q,
 		e.PaidBy,
@@ -340,7 +340,13 @@ func (r *expenseRepository) SoftDelete(
         WHERE 
 			id = $2 
 			AND deleted = false`
-	res, err := r.db.ExecContext(ctx, q, userID, id)
+
+	tx := contexts.GetTx(ctx)
+	if tx == nil {
+		return errors.New("transaction required")
+	}
+
+	res, err := tx.ExecContext(ctx, q, userID, id)
 	if err != nil {
 		return err
 	}
