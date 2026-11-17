@@ -101,3 +101,12 @@ func (r *RedisCache) SetNX(ctx context.Context, key string, value any, ttl *time
 	}
 	return r.client.SetNX(ctx, key, data, *t).Result()
 }
+
+func (r *RedisCache) Exists(ctx context.Context, key string) (bool, error) {
+	count, err := r.client.Exists(ctx, key).Result()
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}

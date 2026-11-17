@@ -11,4 +11,5 @@ type Cache interface {
 	Delete(ctx context.Context, keys ...string) error
 	DeleteByPrefix(ctx context.Context, prefix string) error
 	SetNX(ctx context.Context, key string, value any, ttl *time.Duration) (bool, error)
+	Exists(ctx context.Context, key string) (bool, error)
 }

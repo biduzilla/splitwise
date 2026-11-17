@@ -54,6 +54,7 @@ type mockCache struct {
 	deleteFn         func(ctx context.Context, keys ...string) error
 	deleteByPrefixFn func(ctx context.Context, prefix string) error
 	setNXFn          func(ctx context.Context, key string, value any, ttl *time.Duration) (bool, error)
+	existsFn         func(ctx context.Context, key string) (bool, error)
 }
 
 func (m *mockCache) Get(ctx context.Context, key string, dest any) error {
@@ -61,6 +62,13 @@ func (m *mockCache) Get(ctx context.Context, key string, dest any) error {
 		return m.getFn(ctx, key, dest)
 	}
 	return errors.New("cache miss")
+}
+
+func (m *mockCache) Exists(ctx context.Context, key string) (bool, error) {
+	if m.existsFn != nil {
+		return m.existsFn(ctx, key)
+	}
+	return false, errors.New("cache miss")
 }
 
 func (m *mockCache) SetNX(ctx context.Context, key string, value any, ttl *time.Duration) (bool, error) {
