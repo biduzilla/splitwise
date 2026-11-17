@@ -7,25 +7,32 @@ import (
 	"time"
 )
 
-type WriteExecutor struct {
+type writeExecutor struct {
 	tx         Manager
 	cache      cache.Cache
 	keyBuilder cache.KeyBuilder
+}
+
+type WriteExecutor interface {
+	Execute(
+		ctx context.Context,
+		fn func(ctx context.Context) error,
+	) error
 }
 
 func NewWriterExecutor(
 	tx Manager,
 	cache cache.Cache,
 	keyBuilder cache.KeyBuilder,
-) *WriteExecutor {
-	return &WriteExecutor{
+) *writeExecutor {
+	return &writeExecutor{
 		tx:         tx,
 		cache:      cache,
 		keyBuilder: keyBuilder,
 	}
 }
 
-func (e *WriteExecutor) Execute(
+func (e *writeExecutor) Execute(
 	ctx context.Context,
 	fn func(ctx context.Context) error,
 ) error {
