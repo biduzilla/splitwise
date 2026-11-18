@@ -13,6 +13,7 @@ type SettlementCreated struct {
 	ToUserID     uuid.UUID `json:"to_user_id"`
 	Amount       int64     `json:"amount"`
 	OccurredAt   time.Time `json:"occurred_at"`
+	Token        string    `json:"token"`
 }
 
 func (e SettlementCreated) Key() string {
@@ -24,6 +25,7 @@ type SettlementDeleted struct {
 	SettlementID uuid.UUID `json:"settlement_id"`
 	GroupID      uuid.UUID `json:"group_id"`
 	OccurredAt   time.Time `json:"occurred_at"`
+	Token        string    `json:"token"`
 }
 
 func (e SettlementDeleted) Key() string {

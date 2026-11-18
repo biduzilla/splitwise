@@ -129,6 +129,8 @@ func (s *expenseService) Create(
 		return err
 	}
 
+	model.Shares = shares
+
 	if err := s.producer.PublishExpenseCreated(ctx, ExpenseCreated{
 		EventID:    uuid.New(),
 		ExpenseID:  model.ID,
@@ -136,6 +138,7 @@ func (s *expenseService) Create(
 		PaidBy:     model.PaidBy,
 		Amount:     model.Amount,
 		OccurredAt: time.Now().UTC(),
+		Token:      contexts.GetToken(ctx),
 	}); err != nil {
 		s.logger.Error("failed to publish expense.created",
 			"expense_id", model.ID,
@@ -249,6 +252,7 @@ func (s *expenseService) Update(
 		ExpenseID:  model.ID,
 		GroupID:    model.GroupID,
 		OccurredAt: time.Now().UTC(),
+		Token:      contexts.GetToken(ctx),
 	}); err != nil {
 		s.logger.Error("failed to publish expense.created",
 			"expense_id", model.ID,
@@ -285,6 +289,7 @@ func (s *expenseService) Delete(ctx context.Context, id uuid.UUID) error {
 		ExpenseID:  e.ID,
 		GroupID:    e.GroupID,
 		OccurredAt: time.Now().UTC(),
+		Token:      contexts.GetToken(ctx),
 	}); err != nil {
 		s.logger.Error("failed to publish expense.deleted",
 			"expense_id", e.ID,
@@ -303,8 +308,8 @@ func (s *expenseService) mountShares(
 ) ([]Share, error) {
 	memberSet := make(map[uuid.UUID]groups.MemberDTO, len(groupDetail.Members))
 	for _, m := range groupDetail.Members {
-		if _, exists := memberSet[m.ID]; !exists {
-			memberSet[m.ID] = m
+		if _, exists := memberSet[m.UserID]; !exists {
+			memberSet[m.UserID] = m
 		}
 	}
 
@@ -312,6 +317,7 @@ func (s *expenseService) mountShares(
 		return nil, apierror.NewHTTPError(
 			"paid_by must be a group member", 422, nil)
 	}
+
 	shares := make([]Share, len(model.Shares))
 	switch model.SplitMode {
 	case SplitModeEqual:

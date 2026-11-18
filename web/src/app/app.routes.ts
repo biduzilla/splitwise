@@ -68,6 +68,13 @@ export const routes: Routes = [
                 (m) => m.ExpenseFormComponent
               ),
           },
+          {
+            path: "balances",
+            loadComponent: () =>
+              import("./features/balances/balances-view/balances-view.component").then(
+                (m) => m.BalancesViewComponent
+              ),
+          },
         ],
       },
     ]

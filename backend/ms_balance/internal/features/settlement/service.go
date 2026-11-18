@@ -2,6 +2,7 @@ package settlement
 
 import (
 	"context"
+	"shared/auth/contexts"
 	"shared/cache"
 	"time"
 	"uuid"
@@ -30,6 +31,11 @@ type repo interface {
 		ctx context.Context,
 		groupID uuid.UUID,
 	) ([]*Settlement, error)
+
+	GetByID(
+		ctx context.Context,
+		id uuid.UUID,
+	) (*Settlement, error)
 }
 
 type writeExecutor interface {
@@ -60,6 +66,20 @@ func newService(
 	}
 }
 
+func (s *settlementService) GetByID(
+	ctx context.Context,
+	id uuid.UUID,
+) (*Settlement, error) {
+	key := s.kb.BuildListKey(
+		cache.UUID(contexts.GetUser(ctx).GetID()),
+		cache.UUID(id),
+	)
+
+	return cache.FetchOrCache(ctx, s.c, key, func() (*Settlement, error) {
+		return s.repo.GetByID(ctx, id)
+	})
+}
+
 func (s *settlementService) FindByGroupID(
 	ctx context.Context,
 	groupID uuid.UUID,
@@ -88,6 +108,7 @@ func (s *settlementService) Create(
 		SettlementID: model.ID,
 		GroupID:      model.GroupID,
 		OccurredAt:   time.Now().UTC(),
+		Token:        contexts.GetToken(ctx),
 	})
 
 	return nil
@@ -109,6 +130,7 @@ func (s *settlementService) Delete(
 		EventID:      uuid.New(),
 		SettlementID: id,
 		OccurredAt:   time.Now().UTC(),
+		Token:        contexts.GetToken(ctx),
 	})
 	return nil
 }

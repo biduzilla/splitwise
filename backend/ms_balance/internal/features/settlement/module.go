@@ -9,6 +9,7 @@ import (
 
 type Module struct {
 	Service *settlementService
+	router  *settlementRouter
 }
 
 type InfraDeps struct {
@@ -22,9 +23,16 @@ type MessagingDeps struct {
 	Producer producer
 }
 
+type HTTPDeps struct {
+	ErrHandler    errorHandler
+	AuthMW        authMiddleware
+	IdempotencyMW idempotencyMiddleware
+}
+
 type Dependencies struct {
 	Infra     InfraDeps
 	Messaging MessagingDeps
+	HTTP      HTTPDeps
 }
 
 func NewModule(deps Dependencies) *Module {
@@ -41,8 +49,11 @@ func NewModule(deps Dependencies) *Module {
 		deps.Infra.Cache,
 		kb,
 	)
+	handler := newHandler(service, deps.HTTP.ErrHandler)
+	router := newRouter(handler, deps.HTTP.AuthMW, deps.HTTP.IdempotencyMW)
 
 	return &Module{
 		Service: service,
+		router:  router,
 	}
 }

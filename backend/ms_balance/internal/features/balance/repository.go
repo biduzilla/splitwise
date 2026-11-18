@@ -3,7 +3,9 @@ package balance
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log/slog"
+	"shared/auth/contexts"
 	"shared/db/sqlformat"
 	"uuid"
 )
@@ -67,8 +69,13 @@ func (r *balanceRepository) UpsertBatch(
 
 	r.logger.Info(sqlformat.MinifySQL(q))
 
+	tx := contexts.GetTx(ctx)
+	if tx == nil {
+		return errors.New("transaction required")
+	}
+
 	for userID, balance := range balances {
-		if _, err := r.db.ExecContext(
+		if _, err := tx.ExecContext(
 			ctx,
 			q,
 			groupID,

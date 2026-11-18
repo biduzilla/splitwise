@@ -34,7 +34,7 @@ func main() {
 	cfg.Base.Otel.Port = "localhost:4318"
 
 	cfg.Clients.GroupURL = "http://localhost:4002/v1/groups"
-	cfg.Clients.GroupURL = "http://localhost:4003/v1/expenses"
+	cfg.Clients.ExpenseURL = "http://localhost:4003/v1/expenses"
 
 	cfg.Kafka.Brokers = []string{"localhost:9094"}
 	cfg.Kafka.GroupID = "ms_balance_group"

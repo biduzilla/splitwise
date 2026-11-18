@@ -144,3 +144,18 @@ export interface ExpenseFilters {
   end_date?: string;
   user_id?: string;
 }
+
+/* ============ Balance ============ */
+export interface BalanceMap {
+  [userId: string]: number;
+}
+
+export interface SuggestedTransfer {
+  from_user_id: string;
+  to_user_id: string;
+  amount: number;
+}
+
+export interface SuggestedTransfersResponse {
+  transfers: SuggestedTransfer[];
+}

@@ -21,7 +21,11 @@ type MemberUserDTO struct {
 }
 
 func (m *Membership) ToDTO() MemberDTO {
-	u := m.User.ToDTO()
+	u := MemberUserDTO{}
+
+	if m.User != nil {
+		u = m.User.ToDTO()
+	}
 	return MemberDTO{
 		ID:       m.ID,
 		GroupID:  m.GroupID,

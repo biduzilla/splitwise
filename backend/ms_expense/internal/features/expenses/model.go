@@ -45,7 +45,7 @@ func (e *Expense) ToDTO() ExpenseDTO {
 		Description: e.Description,
 		Category:    e.Category,
 		SplitMode:   e.SplitMode,
-		ExpenseDate: e.ExpenseDate.String(),
+		ExpenseDate: e.ExpenseDate.Format("2006-01-02"),
 		Version:     e.Version,
 		CreatedAt:   e.CreatedAt,
 		Shares:      sharesDto,

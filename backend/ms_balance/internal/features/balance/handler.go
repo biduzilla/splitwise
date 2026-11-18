@@ -55,6 +55,8 @@ func (h *balanceHandler) GetBalances(w http.ResponseWriter, r *http.Request) {
 		h.errHandler.HandlerError(w, r, err)
 		return
 	}
+
+	// NÃO RETORNA NADA, PROBLEMA
 	httputils.Respond(w, r, http.StatusOK, balances, nil, nil)
 }
 
@@ -77,5 +79,7 @@ func (h *balanceHandler) GetSuggested(w http.ResponseWriter, r *http.Request) {
 		h.errHandler.HandlerError(w, r, err)
 		return
 	}
+
+	// NÃO RETORNA NADA, PROBLEMA
 	httputils.Respond(w, r, http.StatusOK, map[string]any{"transfers": transfers}, nil, nil)
 }

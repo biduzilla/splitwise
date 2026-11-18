@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json/v2"
 	"log/slog"
+	"shared/auth/contexts"
 	"shared/cache"
 	"time"
 	"uuid"
@@ -40,6 +41,7 @@ type Event struct {
 	EventID   uuid.UUID `json:"event_id"`
 	GroupID   uuid.UUID `json:"group_id"`
 	EventType string    `json:"event_type"`
+	Token     string    `json:"token"`
 }
 
 func (c *Consumers) Handle(
@@ -58,12 +60,39 @@ func (c *Consumers) Handle(
 		return nil
 	}
 
-	if err := c.svc.Recalculate(ctx, evt.GroupID); err != nil {
-		c.logger.Error("failed to recalculate balance", "group_id", evt.GroupID, "error", err)
-		return err
+	ctx = contexts.SetToken(ctx, evt.Token)
+
+	backoff := time.Second
+	maxAttempts := 3
+	var lastErr error
+
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		if err := c.svc.Recalculate(ctx, evt.GroupID); err != nil {
+			lastErr = err
+			c.logger.Warn("recalculate failed, will retry",
+				"group_id", evt.GroupID,
+				"attempt", attempt,
+				"max_attempts", maxAttempts,
+				"error", err,
+			)
+			if attempt < maxAttempts {
+				select {
+				case <-time.After(backoff):
+					backoff *= 2
+				case <-ctx.Done():
+					return ctx.Err()
+				}
+			}
+			continue
+		}
+		ttl := 7 * 24 * time.Hour
+		_ = c.c.Set(ctx, seenKey, []byte("1"), &ttl)
+		return nil
 	}
 
-	ttl := 7 * 24 * time.Hour
-	_ = c.c.Set(ctx, seenKey, []byte("1"), &ttl)
-	return nil
+	c.logger.Error("recalculate failed after max retries",
+		"group_id", evt.GroupID,
+		"error", lastErr,
+	)
+	return lastErr
 }

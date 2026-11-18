@@ -24,6 +24,7 @@ type groupService struct {
 	producer          producer
 	logger            *slog.Logger
 	membershipService membershipService
+	keyList           string
 }
 
 type WriteExecutor interface {
@@ -100,6 +101,7 @@ func (s *groupService) ListByUser(
 	f filters.Filters,
 ) ([]*Group, filters.Metadata, error) {
 	key := s.kb.BuildListKey(
+		cache.UUID(contexts.GetUser(ctx).GetID()),
 		cache.Int(f.Page),
 		cache.Int(f.PageSize),
 		cache.Str(f.Sort),

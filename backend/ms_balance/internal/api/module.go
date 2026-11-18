@@ -19,6 +19,11 @@ func newModules(deps AppDependencies) *modules {
 				Tx:     deps.Infra.Tx,
 				Cache:  deps.Infra.Cache,
 			},
+			HTTP: settlement.HTTPDeps{
+				ErrHandler:    deps.HTTP.ErrHandler,
+				AuthMW:        deps.HTTP.AuthMW,
+				IdempotencyMW: deps.HTTP.Idempotency,
+			},
 			Messaging: settlement.MessagingDeps{
 				Producer: deps.Messaging.Producer.settlement,
 			},

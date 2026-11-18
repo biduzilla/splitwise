@@ -32,7 +32,7 @@ func (r *settlementRepo) Insert(
 			from_user_id, 
 			to_user_id, 
 			amount, 
-			created_by,
+			created_by
 		)
 		VALUES (?)
 		RETURNING id, version, settled_at`
@@ -92,8 +92,7 @@ func (r *settlementRepo) FindByGroupID(
 			to_user_id, 
 			amount, 
 			settled_at, 
-			version, 
-			created_at 
+			version
 		FROM settlements 
 		WHERE 
 			group_id = $1 
@@ -107,12 +106,46 @@ func (r *settlementRepo) FindByGroupID(
 	var out []*Settlement
 	for rows.Next() {
 		var s Settlement
-		if err := rows.Scan(&s.ID, &s.GroupID, &s.FromUserID, &s.ToUserID, &s.Amount, &s.SettledAt, &s.Version, &s.CreatedAt); err != nil {
+		if err := rows.Scan(&s.ID, &s.GroupID, &s.FromUserID, &s.ToUserID, &s.Amount, &s.SettledAt, &s.Version); err != nil {
 			return nil, err
 		}
 		out = append(out, &s)
 	}
 	return out, rows.Err()
+}
+
+func (r *settlementRepo) GetByID(
+	ctx context.Context,
+	id uuid.UUID,
+) (*Settlement, error) {
+	q := `
+		SELECT
+    		id,
+    		group_id,
+    		from_user_id,
+    		to_user_id,
+    		amount,
+    		settled_at,
+    		version,
+		FROM settlements
+		WHERE
+    		id = $1
+    		AND deleted = false`
+
+	r.logger.Info("query executed", "sql", sqlformat.MinifySQL(q))
+
+	var s Settlement
+	err := r.db.QueryRowContext(ctx, q, id).Scan(
+		&s.ID, &s.GroupID, &s.FromUserID, &s.ToUserID,
+		&s.Amount, &s.SettledAt, &s.Version, &s.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apierror.ErrRecordNotFound
+		}
+		return nil, err
+	}
+	return &s, nil
 }
 
 func queryRow(ctx context.Context, tpl string, logger *slog.Logger, params ...any) (*sql.Row, error) {

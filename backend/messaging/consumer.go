@@ -125,10 +125,11 @@ func (c *Consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 					"topic", msg.Topic,
 					"error", err,
 				)
-				session.MarkMessage(msg, "")
-				session.Commit()
+				// session.MarkMessage(msg, "")
+				// session.Commit()
 				span.End()
-				continue
+				// continue
+				return err
 			}
 
 			span.SetStatus(codes.Ok, "processed")

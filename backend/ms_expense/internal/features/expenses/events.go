@@ -11,6 +11,7 @@ type ExpenseCreated struct {
 	GroupID    uuid.UUID `json:"group_id"`
 	PaidBy     uuid.UUID `json:"paid_by"`
 	Amount     int64     `json:"amount"`
+	Token      string    `json:"token"`
 	OccurredAt time.Time `json:"occurred_at"`
 }
 
@@ -21,6 +22,7 @@ type ExpenseUpdated struct {
 	ExpenseID  uuid.UUID `json:"expense_id"`
 	GroupID    uuid.UUID `json:"group_id"`
 	OccurredAt time.Time `json:"occurred_at"`
+	Token      string    `json:"token"`
 }
 
 func (e ExpenseUpdated) Key() string { return e.GroupID.String() }
@@ -30,6 +32,7 @@ type ExpenseDeleted struct {
 	ExpenseID  uuid.UUID `json:"expense_id"`
 	GroupID    uuid.UUID `json:"group_id"`
 	OccurredAt time.Time `json:"occurred_at"`
+	Token      string    `json:"token"`
 }
 
 func (e ExpenseDeleted) Key() string { return e.GroupID.String() }

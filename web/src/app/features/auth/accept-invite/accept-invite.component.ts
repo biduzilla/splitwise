@@ -1,5 +1,5 @@
 import { Component, DestroyRef, inject, signal, OnInit } from "@angular/core";
-import { ActivatedRoute, Router } from "@angular/router";
+import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { GroupService } from "../../../core/services/group.service";
 import { AuthService } from "../../../core/services/auth.service";
@@ -7,6 +7,7 @@ import { AuthService } from "../../../core/services/auth.service";
 @Component({
   selector: "app-accept-invite",
   standalone: true,
+  imports: [RouterLink],
   template: `
     <div class="min-h-screen flex items-center justify-center bg-slate-50 p-4">
       <div
@@ -22,7 +23,7 @@ import { AuthService } from "../../../core/services/auth.service";
           <p class="text-sm text-red-600">{{ errorMessage() }}</p>
           <a
             routerLink="/groups"
-            class="mt-4 inline-block text-emerald-600 hover:underline"
+            class="mt-4 inline-block cursor-pointer text-emerald-600 hover:underline"
           >
             Ir para meus grupos
           </a>

@@ -172,7 +172,7 @@ func (r *expenseRepository) loadShares(
 	select 
 		user_id,
 		amount
-	from expense_shared
+	from expense_shares
 	where expense_id = $1
 	`
 	rows, err := r.db.QueryContext(ctx, q, expenseID)
@@ -199,36 +199,39 @@ func (r *expenseRepository) FindByGroupID(
 	startDate, endDate *time.Time,
 	f filters.Filters,
 ) ([]*Expense, filters.Metadata, error) {
+	where := "WHERE group_id = $1 AND deleted = false"
+	args := []any{groupID}
+
+	if startDate != nil {
+		args = append(args, *startDate)
+		where += fmt.Sprintf(" AND expense_date >= $%d", len(args))
+	}
+	if endDate != nil {
+		args = append(args, *endDate)
+		where += fmt.Sprintf(" AND expense_date <= $%d", len(args))
+	}
+
 	var total int
-	q_count := `
-	select 
-		count(*)
-	from expenses 
-	WHERE 
-		group_id = $1 
-		AND deleted = false
-		AND ($2::timestamptz IS NULL OR created_at >= $2)
-        AND ($3::timestamptz IS NULL OR created_at <= $3)
-	`
-	if err := r.db.QueryRowContext(ctx, q_count, groupID, startDate, endDate).Scan(&total); err != nil {
+	countQ := "SELECT COUNT(*) FROM exp.expenses " + where
+	if err := r.db.QueryRowContext(ctx, countQ, args...).Scan(&total); err != nil {
 		return nil, filters.Metadata{}, err
 	}
 
+	args = append(args, f.Limit(), f.Offset())
 	q := fmt.Sprintf(`
         SELECT id, group_id, paid_by, amount, description, category, split_mode,
                expense_date, version, created_at, created_by,
                updated_at, updated_by, deleted
         FROM exp.expenses
-        WHERE 
-			group_id = $1 
-			AND deleted = false
-			AND ($2::timestamptz IS NULL OR created_at >= $2)
-        	AND ($3::timestamptz IS NULL OR created_at <= $3)
+        %s
         ORDER BY %s %s
-        LIMIT $4 OFFSET $5`,
-		f.SortColumn(), f.SortDirection())
+        LIMIT $%d OFFSET $%d`,
+		where,
+		f.SortColumn(), f.SortDirection(),
+		len(args)-1, len(args),
+	)
 
-	rows, err := r.db.QueryContext(ctx, q, groupID, startDate, endDate, f.Limit(), f.Offset())
+	rows, err := r.db.QueryContext(ctx, q, args...)
 	if err != nil {
 		return nil, filters.Metadata{}, err
 	}
@@ -238,23 +241,19 @@ func (r *expenseRepository) FindByGroupID(
 	for rows.Next() {
 		var e Expense
 		if err := rows.Scan(
-			&e.ID,
-			&e.GroupID,
-			&e.PaidBy,
-			&e.Amount,
-			&e.Description,
-			&e.Category,
-			&e.SplitMode,
-			&e.ExpenseDate,
-			&e.Version,
-			&e.CreatedAt,
-			&e.CreatedBy,
-			&e.UpdatedAt,
-			&e.UpdatedBy,
-			&e.Deleted,
+			&e.ID, &e.GroupID, &e.PaidBy, &e.Amount, &e.Description, &e.Category,
+			&e.SplitMode, &e.ExpenseDate, &e.Version, &e.CreatedAt, &e.CreatedBy,
+			&e.UpdatedAt, &e.UpdatedBy, &e.Deleted,
 		); err != nil {
 			return nil, filters.Metadata{}, err
 		}
+
+		shares, err := r.loadShares(ctx, e.ID)
+		if err != nil {
+			return nil, filters.Metadata{}, err
+		}
+		e.Shares = shares
+
 		out = append(out, &e)
 	}
 

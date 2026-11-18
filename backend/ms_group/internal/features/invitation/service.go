@@ -43,6 +43,10 @@ type tokenService interface {
 	Validate(raw string) (*claims, error)
 }
 
+type groupService interface {
+	GetKeyList() string
+}
+
 type membershipService interface {
 	Insert(ctx context.Context, m *membership.Membership) error
 	FindByGroupIDAndUserID(ctx context.Context, groupID, userID uuid.UUID) (*membership.Membership, error)
@@ -192,6 +196,7 @@ func (s *invitationService) Accept(
 		return s.repo.MarkUsed(ctx, inv.ID, userID)
 	})
 
+	s.cache.DeleteByPrefix(ctx, "group")
 	event := GroupMemberAdded{
 		EventID:      uuid.New(),
 		EventType:    messaging.EventTypeGroupMemberAdded.String(),
