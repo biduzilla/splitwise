@@ -32,7 +32,7 @@ func (app *application) Server() error {
 		}
 	}()
 
-	deps, err := app.buildDependencies(shutdown)
+	deps, shutdownConsumers, err := app.buildDependencies(shutdown)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func (app *application) Server() error {
 	)
 
 	shutdownError := make(chan error, 1)
-	app.handleShutdown(srv, shutdown, shutdownError)
+	app.handleShutdown(srv, shutdownConsumers, shutdown, shutdownError)
 
 	app.Logger.Info("starting server", "addr", srv.Addr)
 
@@ -78,7 +78,7 @@ func newHTTPServer(addr string, handler http.Handler, logger *slog.Logger, confi
 	}
 }
 
-func (app *application) handleShutdown(srv *http.Server, shutdown chan struct{}, shutdownError chan<- error) {
+func (app *application) handleShutdown(srv *http.Server, shutdownConsumers func(), shutdown chan struct{}, shutdownError chan<- error) {
 	go func() {
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -93,6 +93,8 @@ func (app *application) handleShutdown(srv *http.Server, shutdown chan struct{},
 		if err != nil {
 			shutdownError <- err
 		}
+
+		shutdownConsumers()
 
 		close(shutdown)
 

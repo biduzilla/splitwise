@@ -37,20 +37,20 @@ type dependencies struct {
 	routers *Router
 }
 
-func (app *application) buildDependencies(shutdown chan struct{}) (*dependencies, error) {
+func (app *application) buildDependencies(shutdown chan struct{}) (*dependencies, func(), error) {
 	cacheClient, err := cache.NewRedisCache(
 		app.config.Base.Cache.Addr,
 		app.config.Base.Cache.Password,
 		app.config.Base.Cache.Db, nil,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	app.Logger.Info("redis connection pool established")
 
 	jwtService, err := security.NewService(app.config.Base)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	tx := transaction.NewManager(app.db)
@@ -58,7 +58,6 @@ func (app *application) buildDependencies(shutdown chan struct{}) (*dependencies
 	errHandler := apierror.NewErrorHandler(app.Logger)
 	mw := middleware.New(errHandler, app.config.Base, jwtService, app.Logger, shutdown)
 	producers := newProducer(app.kafkaProducer, app.Logger)
-
 	appDeps := AppDependencies{
 		Infra: InfraDeps{
 			DB:     app.db,
@@ -77,6 +76,8 @@ func (app *application) buildDependencies(shutdown chan struct{}) (*dependencies
 	}
 
 	mods := newModules(appDeps)
+	consumers := NewConsumer(app.kafkaConsumer, mods, cacheClient, app.Logger)
+	shutdownConsumers := consumers.Start(app.Logger)
 	router := NewRouter(
 		errHandler,
 		mw,
@@ -85,5 +86,5 @@ func (app *application) buildDependencies(shutdown chan struct{}) (*dependencies
 
 	return &dependencies{
 		routers: router,
-	}, nil
+	}, shutdownConsumers, nil
 }
