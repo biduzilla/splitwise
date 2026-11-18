@@ -32,12 +32,12 @@ type errorHandler interface {
 	HandlerError(w http.ResponseWriter, r *http.Request, err error)
 }
 
-func NewHandler(svc service, errHandler errorHandler) *balanceHandler {
+func newHandler(svc service, errHandler errorHandler) *balanceHandler {
 	return &balanceHandler{svc: svc, errHandler: errHandler}
 }
 
 func (h *balanceHandler) GetBalances(w http.ResponseWriter, r *http.Request) {
-	tracer := otel.Tracer("ms_expense/internal/features/balance")
+	tracer := otel.Tracer("ms_balance/internal/features/balance")
 	ctx, span := tracer.Start(r.Context(), "balanceHandler.GetBalances")
 	defer span.End()
 
@@ -59,7 +59,7 @@ func (h *balanceHandler) GetBalances(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *balanceHandler) GetSuggested(w http.ResponseWriter, r *http.Request) {
-	tracer := otel.Tracer("ms_expense/internal/features/balance")
+	tracer := otel.Tracer("ms_balance/internal/features/balance")
 	ctx, span := tracer.Start(r.Context(), "balanceHandler.GetSuggested")
 	defer span.End()
 

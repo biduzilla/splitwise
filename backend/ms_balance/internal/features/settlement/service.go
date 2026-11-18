@@ -44,6 +44,22 @@ type producer interface {
 	PublishSettlementDeleted(ctx context.Context, event SettlementDeleted) error
 }
 
+func newService(
+	repo repo,
+	we writeExecutor,
+	producer producer,
+	c cache.Cache,
+	kb cache.KeyBuilder,
+) *settlementService {
+	return &settlementService{
+		repo:     repo,
+		we:       we,
+		producer: producer,
+		c:        c,
+		kb:       kb,
+	}
+}
+
 func (s *settlementService) FindByGroupID(
 	ctx context.Context,
 	groupID uuid.UUID,

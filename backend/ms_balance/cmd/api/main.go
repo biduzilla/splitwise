@@ -1,0 +1,51 @@
+package main
+
+import (
+	"log/slog"
+	"ms_balance/internal/api"
+	"ms_balance/internal/core/config"
+	"os"
+	"time"
+)
+
+func main() {
+	// cfg := config.New()
+	cfg := config.Config{}
+	cfg.Base.Env = "development"
+
+	cfg.Base.Server.Port = 4004
+	cfg.Base.Server.Timeout = 5 * time.Second
+
+	cfg.Base.DB.DSN = "postgres://rateio_user:rateio_password@localhost:5432/rateio_db?sslmode=disable&search_path=bal"
+	cfg.Base.DB.MaxOpenConns = 25
+	cfg.Base.DB.MaxIdleConns = 25
+	cfg.Base.DB.MaxIdleTime = "15m"
+
+	cfg.Base.Limiter.RPS = 50.0
+	cfg.Base.Limiter.Burst = 100
+	cfg.Base.Limiter.Enabled = true
+
+	cfg.Base.Security.PublicKeyPath = "resources/keys/publicKey.pem"
+
+	cfg.Base.Cache.Addr = "localhost:6379"
+	cfg.Base.Cache.Password = "rateio_redis_password"
+	cfg.Base.Cache.Db = 0
+
+	cfg.Base.Otel.Port = "localhost:4318"
+
+	cfg.Clients.GroupURL = "http://localhost:4002/v1/groups"
+	cfg.Clients.GroupURL = "http://localhost:4003/v1/expenses"
+
+	cfg.Kafka.Brokers = []string{"localhost:9094"}
+	cfg.Kafka.GroupID = "ms_balance_group"
+
+	app, _ := api.NewApp(cfg)
+	if app == nil {
+		slog.Error("failed to initialize app")
+		os.Exit(1)
+	}
+	err := app.Server()
+	if err != nil {
+		app.Logger.Error(err.Error())
+	}
+}

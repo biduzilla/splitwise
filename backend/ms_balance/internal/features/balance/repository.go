@@ -13,6 +13,10 @@ type balanceRepository struct {
 	logger *slog.Logger
 }
 
+func newRepository(db *sql.DB, logger *slog.Logger) *balanceRepository {
+	return &balanceRepository{db: db, logger: logger.WithGroup("db")}
+}
+
 func (r *balanceRepository) GetByGroupID(
 	ctx context.Context,
 	groupID uuid.UUID,

@@ -55,6 +55,26 @@ type balanceService struct {
 	we                transaction.WriteExecutor
 }
 
+func newService(
+	repo repo,
+	settlementService settlementService,
+	groupClient groupClient,
+	expenseClient expenseClient,
+	kb cache.KeyBuilder,
+	c cache.Cache,
+	we transaction.WriteExecutor,
+) *balanceService {
+	return &balanceService{
+		repo:              repo,
+		settlementService: settlementService,
+		groupClient:       groupClient,
+		expenseClient:     expenseClient,
+		kb:                kb,
+		c:                 c,
+		we:                we,
+	}
+}
+
 func (s *balanceService) GetBalances(
 	ctx context.Context,
 	groupID uuid.UUID,
