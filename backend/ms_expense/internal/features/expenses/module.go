@@ -49,6 +49,7 @@ func NewModule(deps Dependencies) *Module {
 		deps.Messaging.Producer,
 		deps.Infra.Cache,
 		deps.Infra.Logger,
+		kb,
 	)
 
 	handler := newHandler(service, deps.HTTP.ErrHandler)

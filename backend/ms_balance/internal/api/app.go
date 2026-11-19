@@ -45,7 +45,7 @@ func NewApp(cfg config.Config) (*application, error) {
 	if err := shareddatabase.RunMigrations(
 		migrations.FS,
 		cfg.Base.DB.DSN,
-		"exp_schema_migrations",
+		"bal_schema_migrations",
 		logger,
 	); err != nil {
 		logger.Error("failed to run migrations", "error", err)

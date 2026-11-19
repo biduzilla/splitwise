@@ -175,6 +175,8 @@ func (r *expenseRepository) loadShares(
 	from expense_shares
 	where expense_id = $1
 	`
+
+	r.logger.Info("query executed", "sql", sqlformat.MinifySQL(q))
 	rows, err := r.db.QueryContext(ctx, q, expenseID)
 	if err != nil {
 		return nil, err
@@ -213,6 +215,8 @@ func (r *expenseRepository) FindByGroupID(
 
 	var total int
 	countQ := "SELECT COUNT(*) FROM exp.expenses " + where
+
+	r.logger.Info("query executed", "sql", sqlformat.MinifySQL(countQ))
 	if err := r.db.QueryRowContext(ctx, countQ, args...).Scan(&total); err != nil {
 		return nil, filters.Metadata{}, err
 	}
@@ -230,6 +234,8 @@ func (r *expenseRepository) FindByGroupID(
 		f.SortColumn(), f.SortDirection(),
 		len(args)-1, len(args),
 	)
+
+	r.logger.Info("query executed", "sql", sqlformat.MinifySQL(q))
 
 	rows, err := r.db.QueryContext(ctx, q, args...)
 	if err != nil {
@@ -317,10 +323,13 @@ func (r *expenseRepository) ReplaceShares(
 	expenseID uuid.UUID,
 	shares []Share,
 ) error {
-	if _, err := r.db.ExecContext(ctx,
-		`DELETE FROM expense_shares WHERE expense_id = $1`, expenseID); err != nil {
+	q := `DELETE FROM expense_shares WHERE expense_id = $1`
+
+	r.logger.Info("query executed", "sql", sqlformat.MinifySQL(q))
+	if _, err := r.db.ExecContext(ctx, q, expenseID); err != nil {
 		return err
 	}
+
 	return r.InsertShares(ctx, expenseID, shares)
 }
 
@@ -344,6 +353,8 @@ func (r *expenseRepository) SoftDelete(
 	if tx == nil {
 		return errors.New("transaction required")
 	}
+
+	r.logger.Info("query executed", "sql", sqlformat.MinifySQL(q))
 
 	res, err := tx.ExecContext(ctx, q, userID, id)
 	if err != nil {

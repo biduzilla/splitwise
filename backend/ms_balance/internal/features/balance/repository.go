@@ -67,14 +67,14 @@ func (r *balanceRepository) UpsertBatch(
 			balance = EXCLUDED.balance, 
 			updated_at = now()`
 
-	r.logger.Info(sqlformat.MinifySQL(q))
-
 	tx := contexts.GetTx(ctx)
 	if tx == nil {
 		return errors.New("transaction required")
 	}
 
 	for userID, balance := range balances {
+		r.logger.Info(sqlformat.MinifySQL(q))
+
 		if _, err := tx.ExecContext(
 			ctx,
 			q,

@@ -78,13 +78,14 @@ func newService(
 	producer producer,
 	c cache.Cache,
 	logger *slog.Logger,
+	kb cache.KeyBuilder,
 ) *expenseService {
 	return &expenseService{
 		repo:        repo,
 		we:          we,
 		groupClient: groupClient,
 		producer:    producer,
-		kb:          cache.NewKeyBuilder("ms_expense"),
+		kb:          kb,
 		cache:       c,
 		logger:      logger,
 	}
@@ -95,41 +96,42 @@ func (s *expenseService) Create(
 	model *Expense,
 	participants []uuid.UUID,
 ) error {
-	v := validator.New()
-	if model.Validate(v); !v.Valid() {
-		return apierror.NewValidationError(v.Errors)
-	}
-
-	groupDetail, err := s.groupClient.GetGroup(ctx, model.GroupID)
-	if err != nil {
-		return err
-	}
-
-	shares, err := s.mountShares(model, groupDetail, participants)
-	if err != nil {
-		return err
-	}
-
-	var sum int64
-	for _, sh := range shares {
-		sum += sh.Amount
-	}
-	if sum != model.Amount {
-		return apierror.NewHTTPError(
-			"shares do not sum to total amount", 422, nil)
-	}
 
 	if err := s.we.Execute(ctx, func(ctx context.Context) error {
+		v := validator.New()
+		if model.Validate(v); !v.Valid() {
+			return apierror.NewValidationError(v.Errors)
+		}
+
+		groupDetail, err := s.groupClient.GetGroup(ctx, model.GroupID)
+		if err != nil {
+			return err
+		}
+
+		shares, err := s.mountShares(model, groupDetail, participants)
+		if err != nil {
+			return err
+		}
+
+		var sum int64
+		for _, sh := range shares {
+			sum += sh.Amount
+		}
+		if sum != model.Amount {
+			return apierror.NewHTTPError(
+				"shares do not sum to total amount", 422, nil)
+		}
+
 		if err := s.repo.Insert(ctx, model); err != nil {
 			return err
 		}
+
+		model.Shares = shares
 
 		return s.repo.InsertShares(ctx, model.ID, shares)
 	}); err != nil {
 		return err
 	}
-
-	model.Shares = shares
 
 	if err := s.producer.PublishExpenseCreated(ctx, ExpenseCreated{
 		EventID:    uuid.New(),
@@ -179,13 +181,16 @@ func (s *expenseService) FindAll(
 		return nil, filters.Metadata{}, err
 	}
 
+	// return s.repo.FindByGroupID(ctx, groupID, startDate, endDate, f)
+
 	type listPayload struct {
-		models   []*Expense
-		metadata filters.Metadata
+		Models   []*Expense       `json:"models"`
+		Metadata filters.Metadata `json:"metadata"`
 	}
 
 	key := s.kb.BuildListKey(
 		cache.UUID(groupID),
+		cache.UUID(contexts.GetUser(ctx).GetID()),
 		cache.OptTime(startDate),
 		cache.OptTime(endDate),
 		cache.Int(f.Page),
@@ -199,8 +204,8 @@ func (s *expenseService) FindAll(
 			return listPayload{}, err
 		}
 		return listPayload{
-			models:   models,
-			metadata: metadata,
+			Models:   models,
+			Metadata: metadata,
 		}, nil
 	})
 
@@ -208,7 +213,7 @@ func (s *expenseService) FindAll(
 		return nil, filters.Metadata{}, err
 	}
 
-	return payload.models, payload.metadata, nil
+	return payload.Models, payload.Metadata, nil
 }
 
 func (s *expenseService) Update(

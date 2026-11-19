@@ -21,7 +21,7 @@ func (app *application) Server() error {
 
 	shutdown := make(chan struct{})
 
-	shutdownTracer, err := otel.InitTracer("ms_expense", app.Logger)
+	shutdownTracer, err := otel.InitTracer("ms_balance", app.Logger)
 	if err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func (app *application) Server() error {
 	}
 
 	mux := deps.routers.RegisterRoutes(app.db)
-	instrumentedHandler := otelhttp.NewHandler(mux, "ms_expense")
+	instrumentedHandler := otelhttp.NewHandler(mux, "ms_balance")
 
 	srv := newHTTPServer(
 		fmt.Sprintf(":%d", app.config.Base.Server.Port),
