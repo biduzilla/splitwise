@@ -4,7 +4,6 @@ import { authGuard } from './core/guard/auth.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'groups' },
-
   {
     path: 'login',
     loadComponent: () =>
@@ -54,6 +53,7 @@ export const routes: Routes = [
                 (m) => m.ExpensesListComponent
               ),
           },
+          // Ordem importa: "expenses/new" ANTES de "expenses/:id".
           {
             path: "expenses/new",
             loadComponent: () =>
@@ -75,8 +75,17 @@ export const routes: Routes = [
                 (m) => m.BalancesViewComponent
               ),
           },
+          // NOVO: rota do formulário de acerto. Recebe prefill via query params
+          // (from, to, amount) vindo do botão "Registrar acerto" na balances-view.
+          {
+            path: "settlements/new",
+            loadComponent: () =>
+              import("./features/balances/settlement-form/settlement-form.component").then(
+                (m) => m.SettlementFormComponent
+              ),
+          },
         ],
       },
-    ]
+    ],
   },
-];
+]

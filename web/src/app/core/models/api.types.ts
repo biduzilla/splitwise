@@ -17,7 +17,7 @@ export interface ApiErrorBody {
   path: string;
   status: string;
   message: string;
-  errors: Record<string, string> | null;
+  errors: Record<string, any> | null;
 }
 
 /* ============ Auth ============ */
@@ -99,7 +99,6 @@ export interface Invitation {
 }
 
 /* ============ Expense ============ */
-
 export type SplitMode = "equal" | "exact";
 
 export interface ExpenseShare {
@@ -132,14 +131,16 @@ export interface CreateExpenseInput {
   shares?: ExpenseShare[];
 }
 
-export interface UpdateExpenseInput extends Omit<CreateExpenseInput, "group_id"> {
+export interface UpdateExpenseInput extends Omit<CreateExpenseInput, 'group_id'> {
   version: number;
 }
+
+export type ExpenseSort = "id" | "-id" | "amount" | "-amount" | "expense_date" | "-expense_date";
 
 export interface ExpenseFilters {
   page?: number;
   page_size?: number;
-  sort?: "id" | "-id" | "amount" | "-amount" | "expense_date" | "-expense_date";
+  sort?: ExpenseSort;
   start_date?: string;
   end_date?: string;
   user_id?: string;
@@ -158,4 +159,46 @@ export interface SuggestedTransfer {
 
 export interface SuggestedTransfersResponse {
   transfers: SuggestedTransfer[];
+}
+
+/* ============ Settlement ============ */
+// DTO retornado pelo backend em:
+//   - POST /v1/settlements  (201 Created)
+//   - GET  /v1/settlements  (item dentro de Paginated<Settlement>)
+//
+// Bate 1:1 com o SettlementDTO do Go (settlement/model.go).
+export interface Settlement {
+  id: string;
+  group_id: string;
+  from_user_id: string;
+  to_user_id: string;
+  amount: number;            // centavos
+  settled_at: string;        // ISO 8601
+  version: number;
+}
+
+// Payload de POST /v1/settlements — espelha CreateSettlementDTO do Go.
+export interface CreateSettlementInput {
+  group_id: string;
+  from_user_id: string;
+  to_user_id: string;
+  amount: number;            // centavos
+}
+
+export type SettlementSort = "id" | "-id" | "settled_at" | "-settled_at";
+
+export interface SettlementFilters {
+  group_id: string;          // obrigatório no backend
+  page?: number;
+  page_size?: number;
+  sort?: SettlementSort;
+}
+
+// Query params opcionais suportados pela rota settlements/new para
+// pré-preencher o form a partir de uma sugestão clicada em
+// balances-view (RN: fluxo "Registrar acerto" da sugestão).
+export interface SettlementPrefill {
+  from?: string;
+  to?: string;
+  amount?: number;
 }

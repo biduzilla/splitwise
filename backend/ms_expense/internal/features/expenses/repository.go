@@ -275,18 +275,17 @@ func (r *expenseRepository) Update(
 	q := `
 	update expenses
 	SET 
-		paid_by = $1, 
-		amount = $2, 
-		description = $3, 
-		category = $4,
-        split_mode = $5, 
-		expense_date = $6, 
-		updated_by = $7,
+		amount = $1, 
+		description = $2, 
+		category = $3,
+        split_mode = $4, 
+		expense_date = $5, 
+		updated_by = $6,
         updated_at = now(), 
 		version = version + 1
 	WHERE 
-		id = $8 
-		AND version = $9 
+		id = $7
+		AND version = $8 
 		AND deleted = false
     RETURNING version
 	`
@@ -299,7 +298,6 @@ func (r *expenseRepository) Update(
 	err := tx.QueryRowContext(
 		ctx,
 		q,
-		e.PaidBy,
 		e.Amount,
 		e.Description,
 		e.Category,

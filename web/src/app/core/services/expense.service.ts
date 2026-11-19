@@ -6,7 +6,9 @@ import { CreateExpenseInput, Expense, ExpenseFilters, Paginated, UpdateExpenseIn
 export class ExpenseService {
   private http = inject(HttpClient);
 
-  list(groupId: string, filters: ExpenseFilters = {}) {
+  list(groupId: string, filters: ExpenseFilters = {
+    sort: "amount"
+  }) {
     let p = new HttpParams().set("group_id", groupId);
     if (filters.page) p = p.set("page", filters.page);
     if (filters.page_size) p = p.set("page_size", filters.page_size);

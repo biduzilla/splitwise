@@ -71,47 +71,52 @@ export class ExpenseFormComponent {
   }
 
   onSubmit() {
-    if (this.expenseForm().invalid()) return
+    if (this.expenseForm().invalid()) return;
 
-    const data = this.model()
-    const groupId = this.route.snapshot.paramMap.get("groupId")!
-    const id = this.expenseId()
+    const data = this.model();
+    const groupId = this.route.snapshot.paramMap.get("groupId")!;
+    const id = this.expenseId();
 
-    this.submitting.set(true)
-    this.error.set(null)
-    this.fieldErrors.set({})
+    this.submitting.set(true);
+    this.error.set(null);
+    this.fieldErrors.set({});
 
-    const payload = this.buildPayload(groupId, data)
+    const request$ = id
+      ? this.expenseService.update(id, this.buildUpdatePayload(data))
+      : this.expenseService.create(this.buildCreatePayload(groupId, data), crypto.randomUUID());
 
-    const request$ = id ?
-      this.expenseService.update(id, { ...payload, version: data.version! })
-      : this.expenseService.create(payload, crypto.randomUUID())
-
-    request$
-      .pipe(finalize(() => this.submitting.set(false)))
+    request$.pipe(finalize(() => this.submitting.set(false)))
       .subscribe({
         next: () => this.router.navigate(["/groups", groupId, "expenses"]),
         error: (err: HttpErrorResponse) => this.handleError(err),
-      })
+      });
   }
 
-  private buildPayload(groupId: string, data: ExpenseFormData) {
+  private buildCreatePayload(groupId: string, data: ExpenseFormData) {
+    const base = this.buildBase(data);
+    return { ...base, group_id: groupId };
+  }
+
+  private buildUpdatePayload(data: ExpenseFormData) {
+    const base = this.buildBase(data);
+    return { ...base, version: data.version! };
+  }
+
+  private buildBase(data: ExpenseFormData) {
     if (data.split_mode === "equal") {
       return {
-        group_id: groupId,
         paid_by: data.paid_by,
         amount: data.amount!,
         description: data.description,
-        split_mode: "equal" as const,
+        split_mode: data.split_mode,
         participants: data.participants,
       };
     }
     return {
-      group_id: groupId,
       paid_by: data.paid_by,
       amount: data.amount!,
       description: data.description,
-      split_mode: "exact" as const,
+      split_mode: data.split_mode,
       shares: Object.entries(data.shares).map(([user_id, amount]) => ({
         user_id,
         amount,

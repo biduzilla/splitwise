@@ -28,7 +28,7 @@ func newRouter(handler handler, authMw authMiddleware) *balanceRouter {
 }
 
 func (r *balanceRouter) Register(mux chi.Router) {
-	mux.Route("/settlements/groups/{id}", func(rt chi.Router) {
+	mux.Route("/groups/{id}", func(rt chi.Router) {
 		rt.Use(r.authMw.RequireActivatedUser)
 
 		rt.Get("/balances", r.handler.GetBalances)

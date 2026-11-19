@@ -46,7 +46,11 @@ func (h *groupHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err := httpjson.ReadJSON(w, r, &dto); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Failed to read JSON")
-		h.errHandler.HandlerError(w, r, apierror.NewHTTPError(err.Error(), http.StatusBadRequest, err))
+		apierror.NewHTTPError(
+			err.Error(),
+			http.StatusBadRequest,
+			err,
+		)
 		return
 	}
 

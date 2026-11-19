@@ -58,7 +58,11 @@ func (h *expenseHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err := httpjson.ReadJSON(w, r, &in); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Failed to read JSON")
-		h.errHandler.HandlerError(w, r, apierror.NewBadRequestError(err))
+		apierror.NewHTTPError(
+			err.Error(),
+			http.StatusBadRequest,
+			err,
+		)
 		return
 	}
 
@@ -169,7 +173,11 @@ func (h *expenseHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if err := httpjson.ReadJSON(w, r, &in); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Failed to read JSON")
-		h.errHandler.HandlerError(w, r, err)
+		apierror.NewHTTPError(
+			err.Error(),
+			http.StatusBadRequest,
+			err,
+		)
 		return
 	}
 

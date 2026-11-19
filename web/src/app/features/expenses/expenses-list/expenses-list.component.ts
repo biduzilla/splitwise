@@ -8,6 +8,7 @@ import { Expense, PaginationMetadata, ExpenseFilters } from "../../../core/model
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { finalize } from "rxjs";
 import { HttpErrorResponse } from "@angular/common/http";
+import { AuthService } from "../../../core/services/auth.service";
 
 @Component({
   selector: "app-expenses-list",
@@ -22,6 +23,7 @@ import { HttpErrorResponse } from "@angular/common/http";
 })
 export class ExpensesListComponent {
   private expenseService = inject(ExpenseService)
+  private auth = inject(AuthService)
   private route = inject(ActivatedRoute)
   private router = inject(Router)
   private destroyRef = inject(DestroyRef)
@@ -35,6 +37,8 @@ export class ExpensesListComponent {
 
   total = computed(() => this.metadata().total_records ?? 0);
   isEmpty = computed(() => !this.loading() && this.expenses().length === 0);
+
+  readonly currentUserId = this.auth.currentUserId
 
   constructor() {
     this.route.queryParams
@@ -96,5 +100,9 @@ export class ExpensesListComponent {
       queryParams: { page },
       queryParamsHandling: "merge",
     });
+  }
+
+  isOwner(e: Expense): boolean {
+    return e.paid_by === this.currentUserId();
   }
 }

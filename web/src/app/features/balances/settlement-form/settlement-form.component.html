@@ -1,0 +1,100 @@
+<section class="mx-auto max-w-2xl px-6 py-8">
+  <a [routerLink]="['/groups', groupId(), 'balances']" class="text-sm font-medium text-slate-500 hover:text-slate-900">
+    ← Voltar para saldos
+  </a>
+
+  <h1 class="mt-4 text-2xl font-bold tracking-tight text-slate-900">Registrar acerto</h1>
+  <p class="mt-1 text-sm text-slate-500">
+    Marque uma transferência real (PIX, dinheiro) entre dois membros. O saldo do grupo é recalculado automaticamente.
+  </p>
+
+  @if (prefillAmount() > 0) {
+  <div
+    class="mt-4 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+    Valor pré-preenchido pela sugestão: <strong class="ml-1">{{ (prefillAmount() / 100) | currency: 'BRL' }}</strong>.
+    Ajuste se necessário.
+  </div>
+  }
+
+  @if (error()) {
+  <div class="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+    {{ error() }}
+  </div>
+  }
+
+  <!-- Signal Forms: NÃO usar [form] no <form>. Só (ngSubmit). Cada input
+       ganha [formField] apontando direto para o field do FieldTree — sem .controls. -->
+  <form (ngSubmit)="onSubmit()" class="mt-6 space-y-5">
+    <!-- Quem pagou -->
+    <div>
+      <label class="mb-1.5 block text-sm font-medium text-slate-700" for="from_user_id">
+        Quem pagou
+      </label>
+      <select id="from_user_id" [formField]="settlementForm.from_user_id"
+        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-900 transition-all duration-150 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-60 disabled:cursor-not-allowed">
+        <option value="">Selecione…</option>
+        @for (m of members(); track m.user_id) {
+        <option [value]="m.user_id">{{ m.name ?? m.user_id }}</option>
+        }
+      </select>
+      @if (fieldErrors()["from_user_id"]){
+      <p class="mt-1.5 flex items-center gap-1 text-xs text-red-600">
+        {{ fieldErrors()["from_user_id"] }}
+      </p>
+      }
+    </div>
+
+    <!-- Quem recebeu -->
+    <div>
+      <label class="mb-1.5 block text-sm font-medium text-slate-700" for="to_user_id">
+        Quem recebeu
+      </label>
+      <select id="to_user_id" [formField]="settlementForm.to_user_id"
+        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-900 transition-all duration-150 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-60 disabled:cursor-not-allowed">
+        <option value="">Selecione…</option>
+        @for (m of members(); track m.user_id) {
+        <option [value]="m.user_id">{{ m.name ?? m.user_id }}</option>
+        }
+      </select>
+      @if (fieldErrors()["to_user_id"]){
+      <p class="mt-1.5 flex items-center gap-1 text-xs text-red-600">
+        {{ fieldErrors()["to_user_id"] }}
+      </p>
+      }
+      @if (isFromToSame()) {
+      <p class="mt-1.5 flex items-center gap-1 text-xs text-amber-600">
+        Pagador e recebedor não podem ser a mesma pessoa.
+      </p>
+      }
+    </div>
+
+    <!-- Valor -->
+    <div>
+      <label class="mb-1.5 block text-sm font-medium text-slate-700" for="amount">
+        Valor (em centavos)
+      </label>
+      <input id="amount" type="number" step="1" placeholder="Ex: 33500 = R$ 335,00" [formField]="settlementForm.amount"
+        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-900 placeholder:text-slate-400 transition-all duration-150 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-60 disabled:cursor-not-allowed" />
+      @if (fieldErrors()['amount']) {
+      <p class="mt-1.5 flex items-center gap-1 text-xs text-red-600">
+        {{fieldErrors()['amount'] }}
+      </p>
+      }
+      <p class="mt-1.5 text-xs text-slate-500">
+        Valor em centavos (R$ 1,00 = 100). Backend aceita apenas inteiros positivos.
+      </p>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-3 pt-4">
+      <button type="submit" [disabled]="submitting() || settlementForm().invalid() || isFromToSame()"
+        class="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 font-medium text-white shadow-sm transition-all duration-150 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100 cursor-pointer">
+        {{ submitting() ? "Salvando…" : "Registrar acerto" }}
+      </button>
+      <a [routerLink]="['/groups', groupId(), 'balances']"
+        class="inline-flex items-center justify-center rounded-lg px-4 py-2.5 font-medium text-slate-700 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+        Cancelar
+      </a>
+    </div>
+  </form>
+</section>

@@ -60,6 +60,10 @@ func (c *Consumers) Handle(
 		return nil
 	}
 
+	if evt.Token == "" {
+		return nil
+	}
+
 	ctx = contexts.SetToken(ctx, evt.Token)
 
 	backoff := time.Second

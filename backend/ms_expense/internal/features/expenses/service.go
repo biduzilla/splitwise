@@ -222,7 +222,8 @@ func (s *expenseService) Update(
 	participants []uuid.UUID,
 	model *Expense,
 ) error {
-	saved, err := s.FindByID(ctx, id)
+	model.ID = id
+	saved, err := s.FindByID(ctx, model.ID)
 	if err != nil {
 		return err
 	}

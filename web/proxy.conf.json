@@ -28,5 +28,10 @@
     "target": "http://localhost:4004",
     "changeOrigin": true,
     "pathRewrite": { "^/api/settlements": "/v1/settlements" }
+  },
+  "/api/balances": {
+    "target": "http://localhost:4004",
+    "changeOrigin": true,
+    "pathRewrite": { "^/api/balances": "/v1/groups" }
   }
 }
