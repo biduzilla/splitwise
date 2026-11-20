@@ -49,6 +49,7 @@ type ExpenseDTO struct {
 	ExpenseDate string     `json:"expense_date"`
 	Version     int        `json:"version"`
 	CreatedAt   time.Time  `json:"created_at"`
+	CreatedBy   uuid.UUID  `json:"created_by"`
 	Shares      []ShareDTO `json:"shares"`
 }
 

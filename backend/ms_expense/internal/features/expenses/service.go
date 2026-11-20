@@ -294,6 +294,7 @@ func (s *expenseService) Delete(ctx context.Context, id uuid.UUID) error {
 		EventID:    uuid.New(),
 		ExpenseID:  e.ID,
 		GroupID:    e.GroupID,
+		EventType:  "expense.deleted",
 		OccurredAt: time.Now().UTC(),
 		Token:      contexts.GetToken(ctx),
 	}); err != nil {

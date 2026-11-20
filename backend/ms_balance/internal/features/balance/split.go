@@ -22,7 +22,7 @@ func Minimize(balances map[uuid.UUID]int64) []Transfer {
 		if bal > 0 {
 			creditors = append(creditors, account{id, bal})
 		} else if bal < 0 {
-			debtors = append(debtors, account{id, bal})
+			debtors = append(debtors, account{id, -bal})
 		}
 	}
 
@@ -38,16 +38,16 @@ func Minimize(balances map[uuid.UUID]int64) []Transfer {
 	i, j := 0, 0
 	for i < len(debtors) && j < len(creditors) {
 		d, c := &debtors[i], &creditors[j]
-		amout := min(d.Amount, c.Amount)
+		amount := min(d.Amount, c.Amount)
 
 		result = append(result, Transfer{
 			From:   d.ID,
 			To:     c.ID,
-			Amount: amout,
+			Amount: amount,
 		})
 
-		d.Amount -= amout
-		c.Amount -= amout
+		d.Amount -= amount
+		c.Amount -= amount
 		if d.Amount == 0 {
 			i++
 		}

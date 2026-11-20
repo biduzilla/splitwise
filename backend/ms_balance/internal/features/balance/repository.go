@@ -49,39 +49,41 @@ func (r *balanceRepository) GetByGroupID(
 	return res, rows.Err()
 }
 
-func (r *balanceRepository) UpsertBatch(
+func (r *balanceRepository) ReplaceBalances(
 	ctx context.Context,
 	groupID uuid.UUID,
 	balances map[uuid.UUID]int64,
 ) error {
-	q := `
-		INSERT INTO group_balances (
-			group_id, 
-			user_id, 
-			balance, 
-			updated_at
-		)
-		VALUES ($1, $2, $3, now())
-		ON CONFLICT (group_id, user_id) 
-		DO UPDATE SET 
-			balance = EXCLUDED.balance, 
-			updated_at = now()`
-
 	tx := contexts.GetTx(ctx)
 	if tx == nil {
 		return errors.New("transaction required")
 	}
 
-	for userID, balance := range balances {
-		r.logger.Info(sqlformat.MinifySQL(q))
+	deleteQ := `DELETE FROM group_balances WHERE group_id = $1`
+	r.logger.Info(sqlformat.MinifySQL(deleteQ))
+	if _, err := tx.ExecContext(ctx, deleteQ, groupID); err != nil {
+		return err
+	}
 
-		if _, err := tx.ExecContext(
-			ctx,
-			q,
-			groupID,
-			userID,
+	if len(balances) == 0 {
+		return nil
+	}
+
+	insertQ := `
+		INSERT INTO group_balances (
+			group_id,
+			user_id,
 			balance,
-		); err != nil {
+			updated_at
+		)
+		VALUES ($1, $2, $3, now())
+		ON CONFLICT (group_id, user_id) 
+		DO UPDATE SET balance = EXCLUDED.balance, updated_at = now()`
+
+	for userID, balance := range balances {
+		r.logger.Info(sqlformat.MinifySQL(insertQ))
+
+		if _, err := tx.ExecContext(ctx, insertQ, groupID, userID, balance); err != nil {
 			return err
 		}
 	}

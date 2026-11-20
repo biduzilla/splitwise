@@ -78,7 +78,12 @@ export class BalancesViewComponent implements OnInit {
 
   memberName(userId: string): string {
     const member = this.ctx.memberMap().get(userId);
-    return member?.name ?? userId.slice(0, 8);
+    return member?.name ?? userId?.slice(0, 8);
+  }
+
+  memberInitials(userId: string): string {
+    const name = this.memberName(userId);
+    return name.split(" ").map((n) => n[0])?.slice(0, 2).join("").toUpperCase();
   }
 
   balanceEntries(): { userId: string; amount: number }[] {

@@ -78,6 +78,23 @@ export class ExpensesListComponent {
       })
   }
 
+  delete(e: Expense) {
+    if (!confirm(`Tem certeza que deseja apagar a despesa "${e.description}"?`)) {
+      return;
+    }
+
+    this.error.set(null);
+
+    this.expenseService.delete(e.id).subscribe({
+      next: () => {
+        this.expenses.update((list) => list.filter((expense) => expense.id !== e.id));
+      },
+      error: (err: HttpErrorResponse) => {
+        this.error.set(err.error?.message ?? "Erro ao apagar despesa");
+      }
+    });
+  }
+
   memberName(id: string): string {
     return this.ctx.memberMap().get(id)?.name ?? "-"
   }
@@ -103,6 +120,9 @@ export class ExpensesListComponent {
   }
 
   isOwner(e: Expense): boolean {
-    return e.paid_by === this.currentUserId();
+    const groupOwnerId = this.ctx.activeGroup()?.owner_id;
+    const me = this.currentUserId();
+
+    return groupOwnerId === me;
   }
 }

@@ -37,6 +37,11 @@ func (e *Expense) ToDTO() ExpenseDTO {
 		sharesDto[i] = s.ToDTO()
 	}
 
+	var createdBy uuid.UUID
+	if e.CreatedBy != nil {
+		createdBy = *e.CreatedBy
+	}
+
 	return ExpenseDTO{
 		ID:          e.ID,
 		GroupID:     e.GroupID,
@@ -48,6 +53,7 @@ func (e *Expense) ToDTO() ExpenseDTO {
 		ExpenseDate: e.ExpenseDate.Format("2006-01-02"),
 		Version:     e.Version,
 		CreatedAt:   e.CreatedAt,
+		CreatedBy:   createdBy,
 		Shares:      sharesDto,
 	}
 }

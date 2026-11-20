@@ -16,7 +16,7 @@ type repo interface {
 		groupID uuid.UUID,
 	) (map[uuid.UUID]int64, error)
 
-	UpsertBatch(
+	ReplaceBalances(
 		ctx context.Context,
 		groupID uuid.UUID,
 		balances map[uuid.UUID]int64,
@@ -127,7 +127,7 @@ func (s *balanceService) Recalculate(
 			balances[set.ToUserID] -= set.Amount
 		}
 
-		if err := s.repo.UpsertBatch(ctx, groupID, balances); err != nil {
+		if err := s.repo.ReplaceBalances(ctx, groupID, balances); err != nil {
 			return err
 		}
 		return nil

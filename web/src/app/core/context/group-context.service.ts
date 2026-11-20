@@ -47,11 +47,11 @@ export class GroupContextService {
   });
 
   private extractGroupId(): string | null {
-    let current = this.route.firstChild
+    let current = this.router.routerState.snapshot.root
     while (current) {
-      const id = current.snapshot?.paramMap.get("groupId")
-      if (id) return id
-      current = current.firstChild
+      const id = current.paramMap.get("groupId");
+      if (id) return id;
+      current = current.firstChild!;
     }
     return null
   }

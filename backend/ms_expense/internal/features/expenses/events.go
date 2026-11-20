@@ -33,6 +33,7 @@ type ExpenseDeleted struct {
 	GroupID    uuid.UUID `json:"group_id"`
 	OccurredAt time.Time `json:"occurred_at"`
 	Token      string    `json:"token"`
+	EventType  string    `json:"event_type"`
 }
 
 func (e ExpenseDeleted) Key() string { return e.GroupID.String() }

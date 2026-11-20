@@ -63,7 +63,7 @@
           <th class="px-6 py-3">Descrição</th>
           <th class="px-6 py-3">Pago por</th>
           <th class="px-6 py-3 text-right">Valor</th>
-          <th class="px-6 py-3"></th>
+          <th class="px-6 py-3 text-right">Ações</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100">
@@ -75,14 +75,17 @@
           <td class="px-6 py-4 text-right font-mono font-medium text-slate-900">
             {{ expense.amount / 100 | currency: "BRL" }}
           </td>
-          @if(isOwner(expense)){
-          <td class="px-6 py-4 text-right">
+          <td class="px-6 py-4 text-right flex justify-end gap-3">
+            @if(isOwner(expense)) {
             <a [routerLink]="['/groups', ctx.activeGroupId(), 'expenses', expense.id]"
               class="text-emerald-600 hover:underline">
               Editar
             </a>
+            <button type="button" (click)="delete(expense)" class="text-red-600 hover:underline">
+              Apagar
+            </button>
+            }
           </td>
-          }
 
         </tr>
         }
