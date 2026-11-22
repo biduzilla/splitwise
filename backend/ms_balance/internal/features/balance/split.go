@@ -6,9 +6,9 @@ import (
 )
 
 type Transfer struct {
-	From   uuid.UUID
-	To     uuid.UUID
-	Amount int64
+	From   uuid.UUID `json:"from_user_id"`
+	To     uuid.UUID `json:"to_user_id"`
+	Amount int64     `json:"amount"`
 }
 
 type account struct {

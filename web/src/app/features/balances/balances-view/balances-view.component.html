@@ -76,9 +76,9 @@
         <div class="flex-1">
           <p class="text-sm text-slate-700">
             <span class="font-semibold text-slate-900">{{ memberName(t.from_user_id) }}</span>
-            <span class="text-rose-600">paga</span>
+            <span class="text-rose-600 mx-1">paga</span>
             <span class="font-semibold text-slate-900">{{ (t.amount / 100) | currency: 'BRL' }}</span>
-            <span class="text-slate-500">para</span>
+            <span class="text-slate-500 mx-1">para</span>
             <span class="font-semibold text-slate-900">{{ memberName(t.to_user_id) }}</span>
           </p>
           @if (t.from_user_id === currentUserId()) {

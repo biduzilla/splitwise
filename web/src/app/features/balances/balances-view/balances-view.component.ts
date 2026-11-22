@@ -76,14 +76,23 @@ export class BalancesViewComponent implements OnInit {
       })
   }
 
-  memberName(userId: string): string {
+  memberName(userId: string | null | undefined): string {
+    if (!userId) return "Desconhecido";
+
     const member = this.ctx.memberMap().get(userId);
-    return member?.name ?? userId?.slice(0, 8);
+    if (member?.name) return member.name;
+
+    return userId.slice(0, 8) + "...";
   }
 
-  memberInitials(userId: string): string {
+  memberInitials(userId: string | null | undefined): string {
     const name = this.memberName(userId);
-    return name.split(" ").map((n) => n[0])?.slice(0, 2).join("").toUpperCase();
+    const parts = name.split(" ");
+
+    if (parts.length === 0) return "?";
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
 
   balanceEntries(): { userId: string; amount: number }[] {

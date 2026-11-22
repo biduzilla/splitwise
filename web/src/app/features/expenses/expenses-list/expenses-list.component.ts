@@ -123,6 +123,6 @@ export class ExpensesListComponent {
     const groupOwnerId = this.ctx.activeGroup()?.owner_id;
     const me = this.currentUserId();
 
-    return groupOwnerId === me;
+    return groupOwnerId === me || e.created_by === me;
   }
 }
