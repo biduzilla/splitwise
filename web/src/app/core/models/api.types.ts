@@ -66,7 +66,7 @@ export interface Group {
 export interface Membership {
   id: string;
   group_id: string;
-  name: string;
+  name: User;
   user_id: string;
   role: GroupRole;
   joined_at: string;

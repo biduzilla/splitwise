@@ -61,6 +61,7 @@ export class SettlementFormComponent {
 
   constructor() {
     this.applyPrefill();
+    console.log("teste - m", this.members())
   }
 
   private applyPrefill() {
@@ -135,5 +136,36 @@ export class SettlementFormComponent {
       return;
     }
     this.error.set(err.error?.message ?? "Falha ao registrar acerto");
+  }
+
+  formatCurrency(value: number | null): string {
+    if (value === null || value === undefined) return '';
+    const cents = value.toString().padStart(3, '0');
+    const reais = cents.slice(0, -2);
+    const centavos = cents.slice(-2);
+
+    const reaisComMilhar = reais.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    return `${reaisComMilhar},${centavos}`;
+  }
+
+  onAmountInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+
+    let rawValue = input.value.replace(/\D/g, '');
+
+    if (rawValue === '') {
+      this.model.update((m) => ({ ...m, amount: null }));
+      input.value = '';
+      return;
+    }
+
+    if (rawValue.length > 10) {
+      rawValue = rawValue.slice(0, 10);
+    }
+
+    this.model.update((m) => ({ ...m, amount: parseInt(rawValue, 10) }));
+
+    input.value = this.formatCurrency(parseInt(rawValue, 10));
   }
 }

@@ -34,7 +34,7 @@
         class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-900 transition-all duration-150 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-60 disabled:cursor-not-allowed">
         <option value="">Selecione…</option>
         @for (m of members(); track m.user_id) {
-        <option [value]="m.user_id">{{ m.name ?? m.user_id }}</option>
+        <option [value]="m.user_id">{{ m.user?.name ?? m.user_id }}</option>
         }
       </select>
       @if (fieldErrors()["from_user_id"]){
@@ -53,7 +53,7 @@
         class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-900 transition-all duration-150 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-60 disabled:cursor-not-allowed">
         <option value="">Selecione…</option>
         @for (m of members(); track m.user_id) {
-        <option [value]="m.user_id">{{ m.name ?? m.user_id }}</option>
+        <option [value]="m.user_id">{{ m.user?.name ?? m.user_id }}</option>
         }
       </select>
       @if (fieldErrors()["to_user_id"]){
@@ -71,17 +71,22 @@
     <!-- Valor -->
     <div>
       <label class="mb-1.5 block text-sm font-medium text-slate-700" for="amount">
-        Valor (em centavos)
+        Valor
       </label>
-      <input id="amount" type="number" step="1" placeholder="Ex: 33500 = R$ 335,00" [formField]="settlementForm.amount"
-        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-slate-900 placeholder:text-slate-400 transition-all duration-150 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-60 disabled:cursor-not-allowed" />
+      <div class="relative">
+        <span class="absolute left-3 top-2.5 text-slate-500 font-medium">R$</span>
+        <input id="amount" type="text" inputmode="numeric" [value]="formatCurrency(model().amount)"
+          (input)="onAmountInput($event)"
+          class="w-full rounded-lg border border-slate-300 py-2.5 pl-10 pr-3 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+          placeholder="0,00" />
+      </div>
       @if (fieldErrors()['amount']) {
       <p class="mt-1.5 flex items-center gap-1 text-xs text-red-600">
         {{fieldErrors()['amount'] }}
       </p>
       }
       <p class="mt-1.5 text-xs text-slate-500">
-        Valor em centavos (R$ 1,00 = 100). Backend aceita apenas inteiros positivos.
+        Valor em reais.
       </p>
     </div>
 

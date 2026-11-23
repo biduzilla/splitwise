@@ -87,11 +87,22 @@
           <p class="mt-1 text-xs text-emerald-600 font-medium">← Você vai receber esse PIX</p>
           }
         </div>
+        @if(t.from_user_id == currentUserId()){
         <a [routerLink]="['/groups', groupId() ?? '', 'settlements', 'new']"
           [queryParams]="{ from: t.from_user_id, to: t.to_user_id, amount: t.amount }"
           class="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 active:scale-[0.98] cursor-pointer">
           Registrar acerto
         </a>
+        }@else {
+        <span class="text-xs font-medium text-slate-400 whitespace-nowrap">Aguardando PIX</span>
+
+        <a [routerLink]="['/groups', groupId() ?? '', 'settlements', 'new']"
+          [queryParams]="{ from: t.from_user_id, to: t.to_user_id, amount: t.amount }"
+          class="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 active:scale-[0.98] cursor-pointer">
+          Registrar acerto
+        </a>
+        }
+
       </div>
     </li>
     }
